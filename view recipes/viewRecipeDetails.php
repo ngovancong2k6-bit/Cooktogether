@@ -546,8 +546,8 @@ $youtubeEmbed = getYouTubeEmbedUrl($recipe['video_link'] ?? '');
     }
 
     .interactive-rating-box {
-      background: #fefce8;
-      border: 1px solid #fef08a;
+      background: #fffbeb;
+      border: 1.5px solid #fde68a;
       padding: 18px 24px;
       border-radius: var(--radius-md);
       display: flex;
@@ -558,28 +558,87 @@ $youtubeEmbed = getYouTubeEmbedUrl($recipe['video_link'] ?? '');
       margin-bottom: 28px;
     }
 
-    .rating-stars-select {
-      padding: 8px 16px;
-      border-radius: var(--radius-pill);
-      border: 1.5px solid #fde047;
-      background: white;
+    .rating-left-group {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .rating-prompt {
       font-weight: 700;
-      outline: none;
+      font-size: 15px;
+      color: #92400e;
+    }
+
+    .stars-picker-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: white;
+      padding: 6px 16px;
+      border-radius: var(--radius-pill);
+      border: 1.5px solid #fef08a;
+      box-shadow: 0 2px 6px rgba(245, 158, 11, 0.08);
+    }
+
+    .stars-icons-row {
+      display: flex;
+      gap: 6px;
+    }
+
+    .star-item {
+      font-size: 24px;
+      color: #d1d5db; /* Màu xám ẩn ban đầu */
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      user-select: none;
+    }
+
+    .star-item:hover {
+      transform: scale(1.25);
+    }
+
+    .star-item.active,
+    .star-item.hovered {
+      color: #f59e0b; /* Màu vàng sáng */
+      filter: drop-shadow(0 2px 4px rgba(245, 158, 11, 0.35));
+    }
+
+    .rating-feedback-label {
+      font-size: 14px;
+      font-weight: 700;
+      color: #b45309;
+      min-width: 150px;
+      transition: all 0.2s ease;
+      opacity: 0;
+      display: inline-block;
+    }
+
+    .rating-feedback-label.visible {
+      opacity: 1;
     }
 
     .btn-rate {
-      padding: 8px 20px;
+      padding: 10px 24px;
       border-radius: var(--radius-pill);
       border: none;
-      background: var(--star-color);
+      background: linear-gradient(135deg, #f59e0b, #d97706);
       color: white;
       font-weight: 700;
+      font-size: 14px;
       cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(217, 119, 6, 0.25);
       transition: all 0.2s ease;
     }
 
     .btn-rate:hover {
-      background: #d97706;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(217, 119, 6, 0.35);
+      background: linear-gradient(135deg, #d97706, #b45309);
     }
 
     .comment-form {
@@ -887,16 +946,23 @@ $youtubeEmbed = getYouTubeEmbedUrl($recipe['video_link'] ?? '');
 
       <!-- RATING BOX -->
       <div class="interactive-rating-box">
-        <span style="font-weight: 700; font-size: 14px;">Bạn thấy món này thế nào?</span>
-        <select id="ratingScore" class="rating-stars-select">
-          <option value="5">⭐⭐⭐⭐⭐ Tuyệt vời (5 sao)</option>
-          <option value="4">⭐⭐⭐⭐ Rất ngon (4 sao)</option>
-          <option value="3">⭐⭐⭐ Ổn áp (3 sao)</option>
-          <option value="2">⭐⭐ Tạm được (2 sao)</option>
-          <option value="1">⭐ Cần cải thiện (1 sao)</option>
-        </select>
-        <button type="button" class="btn-rate" onclick="submitRating()">
-          Gửi đánh giá
+        <div class="rating-left-group">
+          <span class="rating-prompt"><i class="fa-solid fa-award" style="color: var(--primary); margin-right: 4px;"></i> Bạn thấy món này thế nào?</span>
+          
+          <div class="stars-picker-wrap" id="starsPickerWrap" onmouseleave="onStarMouseLeave()">
+            <div class="stars-icons-row" id="starsIconsRow">
+              <i class="fa-solid fa-star star-item" data-val="1" onmouseenter="onStarHover(1)" onclick="onStarClick(1)"></i>
+              <i class="fa-solid fa-star star-item" data-val="2" onmouseenter="onStarHover(2)" onclick="onStarClick(2)"></i>
+              <i class="fa-solid fa-star star-item" data-val="3" onmouseenter="onStarHover(3)" onclick="onStarClick(3)"></i>
+              <i class="fa-solid fa-star star-item" data-val="4" onmouseenter="onStarHover(4)" onclick="onStarClick(4)"></i>
+              <i class="fa-solid fa-star star-item" data-val="5" onmouseenter="onStarHover(5)" onclick="onStarClick(5)"></i>
+            </div>
+            <span class="rating-feedback-label" id="ratingFeedbackLabel"></span>
+          </div>
+        </div>
+
+        <button type="button" class="btn-rate" id="btnSubmitRating" onclick="submitRating()">
+          <i class="fa-solid fa-paper-plane"></i> Gửi đánh giá
         </button>
       </div>
 
@@ -1107,22 +1173,89 @@ $youtubeEmbed = getYouTubeEmbedUrl($recipe['video_link'] ?? '');
       }
     }
 
+    // =========================================================================
+    // LOGIC TƯƠNG TÁC ĐÁNH GIÁ 5 SAO (INTERACTIVE STAR RATING WIDGET)
+    // =========================================================================
+    let currentSelectedRating = 0;
+    const ratingLabels = {
+      1: "😞 Cần cải thiện (1 sao)",
+      2: "😐 Tạm được (2 sao)",
+      3: "🙂 Ổn áp (3 sao)",
+      4: "😋 Rất ngon (4 sao)",
+      5: "🤩 Tuyệt vời, cực phẩm! (5 sao)"
+    };
+
+    function onStarHover(starVal) {
+      const stars = document.querySelectorAll("#starsIconsRow .star-item");
+      stars.forEach((star, index) => {
+        if (index < starVal) {
+          star.classList.add("hovered");
+        } else {
+          star.classList.remove("hovered");
+        }
+      });
+      showRatingFeedback(starVal);
+    }
+
+    function onStarMouseLeave() {
+      const stars = document.querySelectorAll("#starsIconsRow .star-item");
+      stars.forEach(star => star.classList.remove("hovered"));
+      if (currentSelectedRating > 0) {
+        showRatingFeedback(currentSelectedRating);
+      } else {
+        hideRatingFeedback();
+      }
+    }
+
+    function onStarClick(starVal) {
+      currentSelectedRating = starVal;
+      const stars = document.querySelectorAll("#starsIconsRow .star-item");
+      stars.forEach((star, index) => {
+        if (index < starVal) {
+          star.classList.add("active");
+        } else {
+          star.classList.remove("active");
+        }
+      });
+      showRatingFeedback(starVal);
+    }
+
+    function showRatingFeedback(val) {
+      const label = document.getElementById("ratingFeedbackLabel");
+      if (label && ratingLabels[val]) {
+        label.innerText = ratingLabels[val];
+        label.classList.add("visible");
+      }
+    }
+
+    function hideRatingFeedback() {
+      const label = document.getElementById("ratingFeedbackLabel");
+      if (label) {
+        label.innerText = "";
+        label.classList.remove("visible");
+      }
+    }
+
     function submitRating() {
-      const score = document.getElementById("ratingScore").value;
+      if (currentSelectedRating <= 0) {
+        alert("Vui lòng nhấp chọn số sao (1 đến 5 sao) bạn muốn đánh giá trước khi gửi!");
+        return;
+      }
+
       const xhr = new XMLHttpRequest();
       xhr.open("POST", "addRating.php", true);
       xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
       xhr.onreadystatechange = function () {
         if (xhr.readyState === 4) {
           if (xhr.status === 200) {
-            alert("✓ Cảm ơn bạn đã đánh giá món ăn này!");
+            alert("✓ Cảm ơn bạn đã đánh giá " + currentSelectedRating + " sao cho món ăn này!");
             window.location.reload();
           } else {
             alert("Không thể gửi đánh giá. Vui lòng thử lại!");
           }
         }
       };
-      xhr.send("recipe_id=" + recipeId + "&rating=" + score);
+      xhr.send("recipe_id=" + recipeId + "&rating=" + currentSelectedRating);
     }
 
     function submitComment() {
