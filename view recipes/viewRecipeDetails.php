@@ -19,6 +19,7 @@ if (!isset($_GET['recipe_id']) || empty($_GET['recipe_id'])) {
 }
 
 $recipeId = intval($_GET['recipe_id']);
+$currentUserId = isset($_SESSION['user_id']) ? intval($_SESSION['user_id']) : 0;
 
 // Fetch recipe details
 $sql = "SELECT r.*, u.name AS uploader_name, c.category_name,
@@ -26,7 +27,7 @@ $sql = "SELECT r.*, u.name AS uploader_name, c.category_name,
                COUNT(DISTINCT rt.id) AS total_ratings
         FROM recipes r
         JOIN users u ON r.user_id = u.id
-        JOIN categories c ON r.category_id = c.id
+        LEFT JOIN categories c ON r.category_id = c.id
         LEFT JOIN ratings rt ON r.id = rt.recipe_id
         WHERE r.id = $recipeId
         GROUP BY r.id";
@@ -41,6 +42,18 @@ if ($result->num_rows === 0) {
 $recipe = $result->fetch_assoc();
 $avgRating = $recipe['avg_rating'] ? number_format((float)$recipe['avg_rating'], 1) : "5.0";
 $photoUrl = !empty($recipe['photo']) ? $recipe['photo'] : 'upload.jpeg';
+$isOwner = ($currentUserId > 0 && $currentUserId === intval($recipe['user_id']));
+
+// Helper function để lấy YouTube Embed URL
+function getYouTubeEmbedUrl($url) {
+    if (empty($url)) return '';
+    $pattern = '/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/i';
+    if (preg_match($pattern, $url, $matches)) {
+        return 'https://www.youtube.com/embed/' . $matches[1];
+    }
+    return '';
+}
+$youtubeEmbed = getYouTubeEmbedUrl($recipe['video_link'] ?? '');
 ?>
 <!DOCTYPE html>
 <html lang="vi">
@@ -110,10 +123,10 @@ $photoUrl = !empty($recipe['photo']) ? $recipe['photo'] : 'upload.jpeg';
     .nav-actions {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }
 
-    .btn-back {
+    .btn-nav {
       display: inline-flex;
       align-items: center;
       gap: 8px;
@@ -129,9 +142,27 @@ $photoUrl = !empty($recipe['photo']) ? $recipe['photo'] : 'upload.jpeg';
       transition: all 0.2s ease;
     }
 
-    .btn-back:hover {
+    .btn-nav:hover {
       background: #f9fafb;
       border-color: #d1d5db;
+    }
+
+    .btn-nav-primary {
+      background: var(--primary);
+      color: white;
+      border: none;
+    }
+    .btn-nav-primary:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn-nav-danger {
+      background: #fee2e2;
+      color: #dc2626;
+      border: 1px solid #fca5a5;
+    }
+    .btn-nav-danger:hover {
+      background: #fecaca;
     }
 
     .detail-container {
@@ -178,24 +209,31 @@ $photoUrl = !empty($recipe['photo']) ? $recipe['photo'] : 'upload.jpeg';
 
     .tag-rating {
       background: #fef3c7;
-      color: #b45309;
+      color: #d97706;
     }
 
     .recipe-main-title {
       font-size: 32px;
       font-weight: 800;
-      color: var(--text-main);
       line-height: 1.3;
+      color: var(--text-main);
       margin-bottom: 18px;
     }
 
     .uploader-info-row {
       display: flex;
       align-items: center;
-      gap: 12px;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 24px;
       padding-bottom: 20px;
       border-bottom: 1px solid var(--border-subtle);
-      margin-bottom: 24px;
+    }
+
+    .uploader-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
     }
 
     .uploader-avatar-large {
@@ -220,6 +258,11 @@ $photoUrl = !empty($recipe['photo']) ? $recipe['photo'] : 'upload.jpeg';
     .uploader-details .upload-date {
       font-size: 13px;
       color: var(--text-muted);
+    }
+
+    .owner-actions {
+      display: flex;
+      gap: 8px;
     }
 
     .featured-photo-wrap {
@@ -285,14 +328,14 @@ $photoUrl = !empty($recipe['photo']) ? $recipe['photo'] : 'upload.jpeg';
       background: #faf8f5;
       border-radius: var(--radius-md);
       border: 1px solid var(--border-subtle);
-      font-size: 14px;
       cursor: pointer;
+      user-select: none;
       transition: all 0.2s ease;
     }
 
     .ingredient-item:hover {
-      background: var(--primary-ultra-light);
-      border-color: rgba(226, 114, 39, 0.3);
+      background: var(--primary-light);
+      border-color: #fed7aa;
     }
 
     .ingredient-item input[type="checkbox"] {
@@ -302,61 +345,78 @@ $photoUrl = !empty($recipe['photo']) ? $recipe['photo'] : 'upload.jpeg';
       cursor: pointer;
     }
 
-    .ingredient-item.checked {
+    .ingredient-item.checked span {
       text-decoration: line-through;
-      opacity: 0.6;
+      color: var(--text-muted);
     }
 
-    .instruction-text {
-      font-size: 15px;
-      line-height: 1.8;
-      color: #374151;
-      white-space: pre-line;
-    }
-
-    .video-section {
-      margin-top: 20px;
+    .step-item-card {
+      display: flex;
+      gap: 18px;
+      margin-bottom: 18px;
+      padding: 18px;
+      background: #faf8f5;
       border-radius: var(--radius-md);
-      overflow: hidden;
+      border: 1px solid var(--border-subtle);
     }
 
-    .video-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 12px 20px;
-      border-radius: var(--radius-pill);
-      background: #ef4444;
+    .step-badge {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--primary);
       color: white;
-      text-decoration: none;
-      font-weight: 700;
-      font-size: 14px;
-      transition: all 0.2s ease;
+      font-weight: 800;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
     }
 
-    .video-btn:hover {
-      background: #dc2626;
-      transform: translateY(-1px);
+    .step-content {
+      font-size: 15px;
+      line-height: 1.7;
+      color: #374151;
+      padding-top: 4px;
+    }
+
+    .video-frame-wrap {
+      position: relative;
+      padding-bottom: 56.25%; /* 16:9 */
+      height: 0;
+      overflow: hidden;
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      margin-top: 14px;
+    }
+    .video-frame-wrap iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
     }
 
     .interactive-rating-box {
-      display: flex;
-      align-items: center;
-      gap: 16px;
       background: #fefce8;
+      border: 1px solid #fef08a;
       padding: 18px 24px;
       border-radius: var(--radius-md);
-      border: 1px solid #fef08a;
-      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 28px;
     }
 
     .rating-stars-select {
-      padding: 8px 14px;
+      padding: 8px 16px;
       border-radius: var(--radius-pill);
-      border: 1px solid #facc15;
+      border: 1.5px solid #fde047;
       background: white;
-      font-size: 14px;
       font-weight: 700;
       outline: none;
     }
@@ -464,6 +524,10 @@ $photoUrl = !empty($recipe['photo']) ? $recipe['photo'] : 'upload.jpeg';
       .detail-container {
         padding: 0 12px 60px;
       }
+      .uploader-info-row {
+        flex-direction: column;
+        align-items: flex-start;
+      }
     }
   </style>
 </head>
@@ -475,10 +539,13 @@ $photoUrl = !empty($recipe['photo']) ? $recipe['photo'] : 'upload.jpeg';
       <i class="fa-solid fa-utensils"></i> Cook Together
     </a>
     <div class="nav-actions">
-      <a href="index3.php" class="btn-back">
+      <a href="index3.php" class="btn-nav">
         <i class="fa-solid fa-arrow-left"></i> Khám phá món khác
       </a>
-      <a href="index4.php" class="btn-back" style="background: var(--primary); color: white; border: none;">
+      <a href="viewUploadedRecipes.php" class="btn-nav">
+        <i class="fa-solid fa-book-bookmark"></i> Kho món của tôi
+      </a>
+      <a href="index4.php" class="btn-nav btn-nav-primary">
         <i class="fa-solid fa-plus"></i> Viết món mới
       </a>
     </div>
@@ -490,7 +557,7 @@ $photoUrl = !empty($recipe['photo']) ? $recipe['photo'] : 'upload.jpeg';
     <div class="recipe-header-card">
       <div class="recipe-meta-tags">
         <span class="meta-tag tag-category">
-          <i class="fa-solid fa-utensils"></i> <?php echo htmlspecialchars($recipe['category_name']); ?>
+          <i class="fa-solid fa-utensils"></i> <?php echo htmlspecialchars($recipe['category_name'] ?? $recipe['type']); ?>
         </span>
         <span class="meta-tag tag-time">
           <i class="fa-regular fa-clock"></i> <?php echo htmlspecialchars($recipe['cooking_time']); ?> phút
@@ -503,13 +570,26 @@ $photoUrl = !empty($recipe['photo']) ? $recipe['photo'] : 'upload.jpeg';
       <h1 class="recipe-main-title"><?php echo htmlspecialchars($recipe['title']); ?></h1>
 
       <div class="uploader-info-row">
-        <div class="uploader-avatar-large">
-          <?php echo strtoupper(substr($recipe['uploader_name'], 0, 1)); ?>
+        <div class="uploader-left">
+          <div class="uploader-avatar-large">
+            <?php echo strtoupper(substr($recipe['uploader_name'], 0, 1)); ?>
+          </div>
+          <div class="uploader-details">
+            <div class="author-name"><?php echo htmlspecialchars($recipe['uploader_name']); ?></div>
+            <div class="upload-date">Đăng vào ngày <?php echo date("d/m/Y", strtotime($recipe['uploaded_at'])); ?></div>
+          </div>
         </div>
-        <div class="uploader-details">
-          <div class="author-name"><?php echo htmlspecialchars($recipe['uploader_name']); ?></div>
-          <div class="upload-date">Đăng vào ngày <?php echo date("d/m/Y", strtotime($recipe['uploaded_at'])); ?></div>
+
+        <?php if ($isOwner): ?>
+        <div class="owner-actions">
+          <a href="edit.php?recipe_id=<?php echo $recipeId; ?>" class="btn-nav" style="background: #fff7ed; border-color: #fed7aa; color: #e27227;">
+            <i class="fa-regular fa-pen-to-square"></i> Chỉnh sửa
+          </a>
+          <button onclick="confirmDelete(<?php echo $recipeId; ?>, '<?php echo addslashes($recipe['title']); ?>')" class="btn-nav btn-nav-danger">
+            <i class="fa-regular fa-trash-can"></i> Xóa món
+          </button>
         </div>
+        <?php endif; ?>
       </div>
 
       <!-- FEATURED PHOTO -->
@@ -521,6 +601,13 @@ $photoUrl = !empty($recipe['photo']) ? $recipe['photo'] : 'upload.jpeg';
       <div class="recipe-intro-box">
         <i class="fa-solid fa-quote-left" style="margin-right: 8px; opacity: 0.5;"></i>
         <?php echo nl2br(htmlspecialchars($recipe['description'])); ?>
+      </div>
+      <?php endif; ?>
+
+      <?php if (!empty($recipe['instructions'])): ?>
+      <div style="background: #f8fafc; border-radius: 12px; padding: 14px 18px; font-size: 14px; color: #475569; margin-top: 10px; border: 1px dashed #cbd5e1;">
+        <strong><i class="fa-solid fa-list-check" style="color: var(--primary);"></i> Tóm tắt quy trình:</strong> 
+        <?php echo htmlspecialchars($recipe['instructions']); ?>
       </div>
       <?php endif; ?>
     </div>
@@ -536,7 +623,7 @@ $photoUrl = !empty($recipe['photo']) ? $recipe['photo'] : 'upload.jpeg';
         $ingredientSql = "SELECT * FROM ingredients WHERE recipe_id = $recipeId";
         $ingredientResult = $conn->query($ingredientSql);
 
-        if ($ingredientResult->num_rows > 0) {
+        if ($ingredientResult && $ingredientResult->num_rows > 0) {
             while ($ing = $ingredientResult->fetch_assoc()) {
                 $qty = (float)$ing['quantity'];
                 $unit = htmlspecialchars($ing['unit']);
@@ -557,19 +644,40 @@ $photoUrl = !empty($recipe['photo']) ? $recipe['photo'] : 'upload.jpeg';
     <!-- INSTRUCTIONS CARD -->
     <div class="content-card">
       <h2 class="card-title">
-        <i class="fa-solid fa-fire-burner" style="color: var(--primary);"></i> Các bước thực hiện
+        <i class="fa-solid fa-fire-burner" style="color: var(--primary);"></i> Các bước thực hiện chi tiết
       </h2>
       
-      <div class="instruction-text">
-        <?php echo nl2br(htmlspecialchars($recipe['recipe'])); ?>
+      <div class="instructions-steps-list">
+        <?php
+        $rawSteps = explode("\n", str_replace(["\r\n", "\r"], "\n", $recipe['recipe']));
+        $stepIndex = 1;
+        foreach ($rawSteps as $st) {
+            $stTrim = trim($st);
+            if (empty($stTrim)) continue;
+            $cleanSt = preg_replace('/^(Bước\s*\d+[:.]?|\d+[.:])\s*/iu', '', $stTrim);
+            echo "
+            <div class='step-item-card'>
+              <div class='step-badge'>{$stepIndex}</div>
+              <div class='step-content'>".nl2br(htmlspecialchars($cleanSt))."</div>
+            </div>";
+            $stepIndex++;
+        }
+        ?>
       </div>
 
-      <?php if (!empty($recipe['video_link'])): ?>
-      <div class="video-section">
-        <h3 style="font-size: 16px; margin: 20px 0 10px; font-weight: 700;">
-          <i class="fa-brands fa-youtube" style="color: #ef4444;"></i> Video hướng dẫn
+      <!-- VIDEO EMBED HOẶC LINK -->
+      <?php if (!empty($youtubeEmbed)): ?>
+      <div style="margin-top: 28px;">
+        <h3 style="font-size: 16px; margin-bottom: 12px; font-weight: 700; color: var(--text-main);">
+          <i class="fa-brands fa-youtube" style="color: #ef4444;"></i> Video hướng dẫn trực tiếp
         </h3>
-        <a href="<?php echo htmlspecialchars($recipe['video_link']); ?>" target="_blank" class="video-btn">
+        <div class="video-frame-wrap">
+          <iframe src="<?php echo htmlspecialchars($youtubeEmbed); ?>" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        </div>
+      </div>
+      <?php elseif (!empty($recipe['video_link'])): ?>
+      <div style="margin-top: 24px;">
+        <a href="<?php echo htmlspecialchars($recipe['video_link']); ?>" target="_blank" class="btn-nav btn-nav-primary" style="padding: 12px 24px; font-size: 15px;">
           <i class="fa-solid fa-play"></i> Xem video thực hiện trên YouTube
         </a>
       </div>
@@ -600,7 +708,7 @@ $photoUrl = !empty($recipe['photo']) ? $recipe['photo'] : 'upload.jpeg';
       <!-- COMMENT SUBMIT FORM -->
       <div class="comment-form">
         <textarea id="commentContent" class="comment-textarea" placeholder="Viết cảm nhận, mẹo nấu hoặc lời cảm ơn đến tác giả..."></textarea>
-        <button type="button" class="btn-back" style="background: var(--primary); color: white; border: none; font-weight: 700;" onclick="submitComment()">
+        <button type="button" class="btn-nav btn-nav-primary" style="font-weight: 700;" onclick="submitComment()">
           <i class="fa-solid fa-paper-plane"></i> Gửi bình luận
         </button>
       </div>
@@ -615,73 +723,90 @@ $photoUrl = !empty($recipe['photo']) ? $recipe['photo'] : 'upload.jpeg';
                         ORDER BY c.created_at DESC";
         $commentsResult = $conn->query($commentsSql);
 
-        if ($commentsResult->num_rows > 0) {
+        if ($commentsResult && $commentsResult->num_rows > 0) {
             while ($comment = $commentsResult->fetch_assoc()) {
                 $author = htmlspecialchars($comment['commenter_name']);
-                $initial = strtoupper(substr($author, 0, 1));
+                $commentText = nl2br(htmlspecialchars($comment['comment']));
                 $time = date("d/m/Y H:i", strtotime($comment['created_at']));
-                $content = nl2br(htmlspecialchars($comment['content']));
+                $initial = strtoupper(substr($author, 0, 1));
                 echo "
                 <div class='comment-item'>
                   <div class='comment-avatar'>{$initial}</div>
                   <div class='comment-content-wrap'>
                     <div class='comment-author'>{$author}</div>
                     <div class='comment-time'>{$time}</div>
-                    <div class='comment-text'>{$content}</div>
+                    <div class='comment-text'>{$commentText}</div>
                   </div>
                 </div>";
             }
         } else {
-            echo "<p style='color: #9ca3af; text-align: center; padding: 20px;'>Chưa có bình luận nào. Hãy là người đầu tiên chia sẻ cảm nhận nhé!</p>";
+            echo "<p style='color: #9ca3af; text-align: center; padding: 20px;'>Chưa có bình luận nào. Hãy là người đầu tiên chia sẻ cảm nghĩ nhé!</p>";
         }
         ?>
       </div>
-
     </div>
 
   </div>
 
   <script>
-    function toggleIngredient(el) {
-      var cb = el.querySelector("input[type='checkbox']");
-      cb.checked = !cb.checked;
-      el.classList.toggle("checked", cb.checked);
+    const recipeId = <?php echo $recipeId; ?>;
+
+    function toggleIngredient(element) {
+      const checkbox = element.querySelector('input[type="checkbox"]');
+      checkbox.checked = !checkbox.checked;
+      if (checkbox.checked) {
+        element.classList.add('checked');
+      } else {
+        element.classList.remove('checked');
+      }
+    }
+
+    function confirmDelete(id, title) {
+      if (confirm('Bạn có chắc chắn muốn xóa công thức "' + title + '" không?\nHành động này không thể khôi phục!')) {
+        window.location.href = 'delete.php?recipe_id=' + id;
+      }
+    }
+
+    function submitRating() {
+      const score = document.getElementById("ratingScore").value;
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", "addRating.php", true);
+      xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4) {
+          if (xhr.status === 200) {
+            alert("✓ Cảm ơn bạn đã đánh giá món ăn này!");
+            window.location.reload();
+          } else {
+            alert("Không thể gửi đánh giá. Vui lòng thử lại!");
+          }
+        }
+      };
+      xhr.send("recipe_id=" + recipeId + "&rating=" + score);
     }
 
     function submitComment() {
-      var content = document.getElementById("commentContent").value.trim();
+      const content = document.getElementById("commentContent").value.trim();
       if (!content) {
         alert("Vui lòng nhập nội dung bình luận!");
         return;
       }
 
-      var xhr = new XMLHttpRequest();
-      xhr.onreadystatechange = function () {
-        if (xhr.readyState === 4 && xhr.status === 200) {
-          location.reload();
-        }
-      };
+      const xhr = new XMLHttpRequest();
       xhr.open("POST", "addComment.php", true);
-      xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-      xhr.send("recipe_id=<?php echo $recipeId; ?>&content=" + encodeURIComponent(content));
-    }
-
-    function submitRating() {
-      var rating = document.getElementById("ratingScore").value;
-      var xhr = new XMLHttpRequest();
+      xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
       xhr.onreadystatechange = function () {
-        if (xhr.readyState === 4 && xhr.status === 200) {
-          alert("Cảm ơn bạn đã đánh giá món ăn này!");
-          location.reload();
+        if (xhr.readyState === 4) {
+          if (xhr.status === 200) {
+            alert("✓ Bình luận của bạn đã được đăng tải!");
+            window.location.reload();
+          } else {
+            alert("Không thể gửi bình luận. Vui lòng thử lại!");
+          }
         }
       };
-      xhr.open("POST", "addRating.php", true);
-      xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-      xhr.send("recipe_id=<?php echo $recipeId; ?>&rating=" + rating);
+      xhr.send("recipe_id=" + recipeId + "&comment=" + encodeURIComponent(content));
     }
   </script>
 </body>
 </html>
-<?php
-$conn->close();
-?>

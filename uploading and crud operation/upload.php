@@ -1,92 +1,145 @@
 <?php
-
-// Start session
 session_start();
 
-// Get the user ID from the logged-in user
-$userId = $_SESSION['user_id'];
-
-
-// Connect to the database
-$dsn = 'mysql:host=localhost;port=3306;dbname=recipe_sharing_platform';
-
-$pdo = new PDO($dsn, 'root', '');
-
-
-// Validate the form data
-if (empty($_POST['title']) || empty($_POST['cooking_time']) || empty($_POST['recipe']) || empty($_POST['type'])) {
-  // Display an error message
-  echo "Please fill in all required fields.";
-  return;
+if (!isset($_SESSION['user_id'])) {
+    header("Location: index.php");
+    exit();
 }
 
-// Get the category ID from the database
-$stmt = $pdo->prepare('SELECT id FROM categories WHERE category_name = :category_name');
-$stmt->bindParam(':category_name', $_POST['type']);
-$stmt->execute();
-$categoryId = $stmt->fetchColumn();
+$userId = intval($_SESSION['user_id']);
 
-// Upload the image file
-if (isset($_FILES['image']) && $_FILES['image']['size'] > 0) {
-  $fileName = time() . '_' . basename($_FILES['image']['name']);
-  $filePath = __DIR__ . '/' . $fileName;
+// Kết nối cơ sở dữ liệu
+$dsn = 'mysql:host=localhost;port=3306;dbname=recipe_sharing_platform;charset=utf8mb4';
+try {
+    $pdo = new PDO($dsn, 'root', '', [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+    ]);
+} catch (PDOException $e) {
+    die("Lỗi kết nối cơ sở dữ liệu: " . $e->getMessage());
+}
 
-  move_uploaded_file($_FILES['image']['tmp_name'], $filePath);
+// Kiểm tra method POST
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header("Location: index4.php");
+    exit();
+}
+
+// Validate dữ liệu bắt buộc
+$title = trim($_POST['title'] ?? '');
+$cookingTime = intval($_POST['cooking_time'] ?? 30);
+$type = trim($_POST['type'] ?? 'Vietnamese');
+$description = trim($_POST['description'] ?? '');
+$instructions = trim($_POST['instructions'] ?? '');
+$videoLink = trim($_POST['video_link'] ?? '');
+$photoUrl = trim($_POST['photo_url'] ?? '');
+
+if (empty($title) || empty($type)) {
+    echo "<script>alert('Vui lòng điền đầy đủ tên món ăn và danh mục!'); window.history.back();</script>";
+    exit();
+}
+
+// Xử lý các bước nấu (steps[])
+$steps = $_POST['steps'] ?? [];
+$recipeText = '';
+if (!empty($steps) && is_array($steps)) {
+    $formattedSteps = [];
+    $i = 1;
+    foreach ($steps as $step) {
+        $stepTrim = trim($step);
+        if (!empty($stepTrim)) {
+            $formattedSteps[] = "Bước " . $i . ": " . $stepTrim;
+            $i++;
+        }
+    }
+    $recipeText = implode("\n", $formattedSteps);
 } else {
-  $fileName = '';
+    $recipeText = trim($_POST['recipe'] ?? '');
 }
 
-// Upload the video link
-$videoLink = isset($_POST['video_link']) ? $_POST['video_link'] : '';
+if (empty($recipeText)) {
+    $recipeText = "1. Chuẩn bị và sơ chế nguyên liệu sạch sẽ.\n2. Chế biến theo khẩu vị gia đình.\n3. Bày ra đĩa và thưởng thức khi còn nóng.";
+}
+
+// Lấy category_id tương ứng
+$catStmt = $pdo->prepare('SELECT id FROM categories WHERE category_name = :category_name LIMIT 1');
+$catStmt->execute([':category_name' => $type]);
+$categoryId = $catStmt->fetchColumn();
+if (!$categoryId) {
+    $categoryId = 6; // Mặc định Vietnamese nếu không tìm thấy
+}
+
+// Xử lý hình ảnh
+$finalPhoto = '';
+if (isset($_FILES['image']) && $_FILES['image']['size'] > 0 && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+    $ext = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION));
+    $allowed = ['jpg', 'jpeg', 'png', 'webp'];
+    if (in_array($ext, $allowed)) {
+        $newFileName = 'recipe_' . time() . '_' . rand(100, 999) . '.' . $ext;
+        $targetPath = __DIR__ . '/' . $newFileName;
+        if (move_uploaded_file($_FILES['image']['tmp_name'], $targetPath)) {
+            $finalPhoto = $newFileName;
+        }
+    }
+}
+
+// Nếu không upload file mà có nhập URL
+if (empty($finalPhoto) && !empty($photoUrl)) {
+    $finalPhoto = $photoUrl;
+}
+
+// Nếu vẫn chưa có ảnh, dùng ảnh mặc định
+if (empty($finalPhoto)) {
+    $finalPhoto = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800';
+}
+
+// Chuẩn hóa link video YouTube
 if (!empty($videoLink)) {
-  // Validate the video link
-  if (!filter_var($videoLink, FILTER_VALIDATE_URL)) {
-    // Display an error message
-    return;
-  }
-} else {
-  $videoLink = '';
+    if (!filter_var($videoLink, FILTER_VALIDATE_URL)) {
+        $videoLink = '';
+    }
 }
 
-$description = isset($_POST['description']) ? $_POST['description'] : '';
-$instructions = isset($_POST['instructions']) ? $_POST['instructions'] : '';
+// 1. Chèn vào bảng recipes
+$sql = "INSERT INTO recipes (title, cooking_time, recipe, type, category_id, photo, video_link, description, instructions, user_id, uploaded_at)
+        VALUES (:title, :cooking_time, :recipe, :type, :category_id, :photo, :video_link, :description, :instructions, :user_id, NOW())";
 
-// Insert the recipe data into the database
-$stmt = $pdo->prepare('INSERT INTO recipes (title, cooking_time, recipe, type, category_id, photo, video_link, description, instructions, user_id, uploaded_at)
-VALUES (:title, :cooking_time, :recipe, :type, :category_id, :photo, :video_link, :description, :instructions, :user_id, NOW())');
+$stmt = $pdo->prepare($sql);
+$stmt->execute([
+    ':title' => $title,
+    ':cooking_time' => $cookingTime,
+    ':recipe' => $recipeText,
+    ':type' => $type,
+    ':category_id' => $categoryId,
+    ':photo' => $finalPhoto,
+    ':video_link' => $videoLink,
+    ':description' => $description,
+    ':instructions' => $instructions,
+    ':user_id' => $userId
+]);
 
-$stmt->bindParam(':title', $_POST['title']);
-$stmt->bindParam(':cooking_time', $_POST['cooking_time']);
-$stmt->bindParam(':recipe', $_POST['recipe']);
-$stmt->bindParam(':type', $_POST['type']);
-$stmt->bindParam(':category_id', $categoryId);
-$stmt->bindParam(':photo', $fileName);
-$stmt->bindParam(':video_link', $videoLink);
-$stmt->bindParam(':description', $description);
-$stmt->bindParam(':instructions', $instructions);
-$stmt->bindParam(':user_id', $userId); // Get the user ID from the logged-in user
-
-$stmt->execute();
-
-// Get the recipe ID of the new recipe
 $recipeId = $pdo->lastInsertId();
 
-// Insert the ingredient data into the database
+// 2. Chèn danh sách nguyên liệu vào bảng ingredients
 if (!empty($_POST['ingredients']) && is_array($_POST['ingredients'])) {
-  foreach ($_POST['ingredients'] as $key => $ingredient) {
-    if (empty($ingredient)) continue;
-    $stmt = $pdo->prepare('INSERT INTO ingredients (recipe_id, ingredient_name, quantity, unit)
-  VALUES (:recipe_id, :ingredient_name, :quantity, :unit)');
-
-    $stmt->bindParam(':recipe_id', $recipeId);
-    $stmt->bindParam(':ingredient_name', $ingredient);
-    $qty = isset($_POST['quantities'][$key]) ? $_POST['quantities'][$key] : 0;
-    $unit = isset($_POST['units'][$key]) ? $_POST['units'][$key] : '';
-    $stmt->bindParam(':quantity', $qty);
-    $stmt->bindParam(':unit', $unit);
-
-    $stmt->execute();
-  }
+    $ingStmt = $pdo->prepare('INSERT INTO ingredients (recipe_id, ingredient_name, quantity, unit) VALUES (:recipe_id, :ingredient_name, :quantity, :unit)');
+    
+    foreach ($_POST['ingredients'] as $key => $ingName) {
+        $ingName = trim($ingName);
+        if (empty($ingName)) continue;
+        
+        $qty = isset($_POST['quantities'][$key]) ? floatval($_POST['quantities'][$key]) : 1;
+        $unit = isset($_POST['units'][$key]) ? trim($_POST['units'][$key]) : 'phần';
+        
+        $ingStmt->execute([
+            ':recipe_id' => $recipeId,
+            ':ingredient_name' => $ingName,
+            ':quantity' => $qty,
+            ':unit' => $unit
+        ]);
+    }
 }
-header('Location: index3.php');
+
+// Chuyển hướng đến chi tiết món vừa tạo
+header("Location: viewRecipeDetails.php?recipe_id=" . $recipeId);
 exit();
