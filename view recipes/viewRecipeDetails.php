@@ -313,6 +313,96 @@ $youtubeEmbed = getYouTubeEmbedUrl($recipe['video_link'] ?? '');
       gap: 10px;
     }
 
+    /* SCALING TOOLBAR STYLES */
+    .scaling-toolbar {
+      background: #fffaf5;
+      border: 1px solid #fed7aa;
+      border-radius: var(--radius-md);
+      padding: 14px 18px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .scaling-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13.5px;
+      color: #9a3412;
+      font-weight: 600;
+    }
+
+    .scaling-factor-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 10px;
+      background: #e27227;
+      color: #ffffff;
+      border-radius: var(--radius-pill);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+
+    .scaling-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .scaling-presets-label {
+      font-size: 12.5px;
+      color: #7c2d12;
+      font-weight: 600;
+      margin-right: 2px;
+    }
+
+    .btn-preset-scale {
+      padding: 5px 12px;
+      border-radius: var(--radius-pill);
+      border: 1px solid #fed7aa;
+      background: #ffffff;
+      color: #7c2d12;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-preset-scale:hover, .btn-preset-scale.active {
+      background: #e27227;
+      color: #ffffff;
+      border-color: #e27227;
+      box-shadow: 0 2px 6px rgba(226, 114, 39, 0.25);
+    }
+
+    .btn-reset-scale {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: var(--radius-pill);
+      border: 1px solid #e5e7eb;
+      background: #ffffff;
+      color: #6b7280;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-reset-scale:hover {
+      background: #f3f4f6;
+      color: #1f2937;
+      border-color: #d1d5db;
+    }
+
+    /* INGREDIENTS CHECKLIST & INPUTS */
     .ingredients-checklist {
       list-style: none;
       display: grid;
@@ -324,7 +414,7 @@ $youtubeEmbed = getYouTubeEmbedUrl($recipe['video_link'] ?? '');
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 12px 16px;
+      padding: 10px 14px;
       background: #faf8f5;
       border-radius: var(--radius-md);
       border: 1px solid var(--border-subtle);
@@ -343,9 +433,65 @@ $youtubeEmbed = getYouTubeEmbedUrl($recipe['video_link'] ?? '');
       height: 18px;
       accent-color: var(--primary);
       cursor: pointer;
+      flex-shrink: 0;
     }
 
-    .ingredient-item.checked span {
+    .ingredient-content-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .qty-input {
+      width: 68px;
+      padding: 4px 6px;
+      border: 1.5px solid #d1d5db;
+      border-radius: 8px;
+      background: #ffffff;
+      color: #111827;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 800;
+      text-align: center;
+      outline: none;
+      transition: all 0.2s ease;
+      cursor: text;
+    }
+
+    .qty-input:focus {
+      border-color: var(--primary);
+      background: #ffffff;
+      box-shadow: 0 0 0 3px rgba(226, 114, 39, 0.2);
+    }
+
+    .qty-input.highlight-changed {
+      animation: pulseHighlight 0.4s ease;
+    }
+
+    @keyframes pulseHighlight {
+      0% { transform: scale(1); background-color: #fff7ed; }
+      50% { transform: scale(1.08); background-color: #ffedd5; }
+      100% { transform: scale(1); background-color: #ffffff; }
+    }
+
+    .ing-unit {
+      font-weight: 700;
+      color: #4b5563;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+
+    .ing-name {
+      color: var(--text-main);
+      font-size: 14px;
+      font-weight: 500;
+      word-break: break-word;
+    }
+
+    .ingredient-item.checked .ing-name,
+    .ingredient-item.checked .ing-unit {
       text-decoration: line-through;
       color: var(--text-muted);
     }
@@ -528,6 +674,10 @@ $youtubeEmbed = getYouTubeEmbedUrl($recipe['video_link'] ?? '');
         flex-direction: column;
         align-items: flex-start;
       }
+      .scaling-toolbar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
     }
   </style>
 </head>
@@ -612,33 +762,75 @@ $youtubeEmbed = getYouTubeEmbedUrl($recipe['video_link'] ?? '');
       <?php endif; ?>
     </div>
 
-    <!-- INGREDIENTS CARD -->
-    <div class="content-card">
+    <!-- INGREDIENTS CARD WITH AUTO-SCALING -->
+    <div class="content-card" id="ingredientsCard">
       <h2 class="card-title">
         <i class="fa-solid fa-carrot" style="color: var(--primary);"></i> Nguyên liệu chuẩn bị
       </h2>
       
-      <ul class="ingredients-checklist">
+      <!-- TOOLBAR QUY ĐỔI ĐỊNH LƯỢNG THÔNG MINH -->
+      <div class="scaling-toolbar">
+        <div class="scaling-info">
+          <i class="fa-solid fa-scale-balanced" style="color: var(--primary); font-size: 16px;"></i>
+          <span>Tự động quy đổi tỷ lệ:</span>
+          <span class="scaling-factor-badge" id="scaleFactorBadge">1.0x (Gốc)</span>
+        </div>
+
+        <div class="scaling-actions">
+          <span class="scaling-presets-label">Khẩu phần nhanh:</span>
+          <button type="button" class="btn-preset-scale" onclick="applyPresetScale(0.5, this)">0.5x</button>
+          <button type="button" class="btn-preset-scale active" id="btnScale1x" onclick="applyPresetScale(1.0, this)">1x</button>
+          <button type="button" class="btn-preset-scale" onclick="applyPresetScale(1.5, this)">1.5x</button>
+          <button type="button" class="btn-preset-scale" onclick="applyPresetScale(2.0, this)">2x</button>
+          <button type="button" class="btn-preset-scale" onclick="applyPresetScale(3.0, this)">3x</button>
+          
+          <button type="button" class="btn-reset-scale" onclick="resetIngredientScaling()" title="Đặt lại định lượng ban đầu">
+            <i class="fa-solid fa-rotate-left"></i> Đặt lại gốc
+          </button>
+        </div>
+      </div>
+
+      <ul class="ingredients-checklist" id="ingredientsList">
         <?php
         $ingredientSql = "SELECT * FROM ingredients WHERE recipe_id = $recipeId";
         $ingredientResult = $conn->query($ingredientSql);
 
         if ($ingredientResult && $ingredientResult->num_rows > 0) {
+            $ingIndex = 0;
             while ($ing = $ingredientResult->fetch_assoc()) {
                 $qty = (float)$ing['quantity'];
                 $unit = htmlspecialchars($ing['unit']);
                 $name = htmlspecialchars($ing['ingredient_name']);
+                $ingId = intval($ing['id']);
                 echo "
-                <li class='ingredient-item' onclick='toggleIngredient(this)'>
+                <li class='ingredient-item' onclick='toggleIngredient(this, event)'>
                   <input type='checkbox' onclick='event.stopPropagation()'>
-                  <span><strong>{$qty} {$unit}</strong> {$name}</span>
+                  <div class='ingredient-content-wrap'>
+                    <input type='number' step='any' min='0.001' 
+                           class='qty-input' 
+                           id='ing_qty_{$ingIndex}'
+                           data-id='{$ingId}' 
+                           data-base-amount='{$qty}' 
+                           value='{$qty}' 
+                           onclick='event.stopPropagation()' 
+                           onfocus='this.select()'
+                           oninput='handleIngredientChange(this)'>
+                    <span class='ing-unit'>{$unit}</span>
+                    <span class='ing-name'>{$name}</span>
+                  </div>
                 </li>";
+                $ingIndex++;
             }
         } else {
             echo "<p style='color: #9ca3af;'>Chưa có thông tin nguyên liệu chi tiết.</p>";
         }
         ?>
       </ul>
+      
+      <p style="margin-top: 14px; font-size: 13px; color: #9ca3af; font-style: italic;">
+        <i class="fa-solid fa-circle-info" style="color: var(--primary); margin-right: 4px;"></i> 
+        Mẹo: Bạn có thể chỉnh sửa số lượng của <strong>bất kỳ nguyên liệu nào</strong>, toàn bộ các nguyên liệu còn lại sẽ tự động quy đổi theo đúng tỷ lệ chuẩn vị!
+      </p>
     </div>
 
     <!-- INSTRUCTIONS CARD -->
@@ -751,9 +943,17 @@ $youtubeEmbed = getYouTubeEmbedUrl($recipe['video_link'] ?? '');
   <script>
     const recipeId = <?php echo $recipeId; ?>;
 
-    function toggleIngredient(element) {
+    function toggleIngredient(element, event) {
+      // Nếu click trực tiếp vào ô input thì không toggle checkbox
+      if (event && event.target && (event.target.tagName === 'INPUT' && event.target.type !== 'checkbox')) {
+        return;
+      }
       const checkbox = element.querySelector('input[type="checkbox"]');
-      checkbox.checked = !checkbox.checked;
+      if (event && event.target === checkbox) {
+        // Nếu click thẳng vào checkbox thì không đảo ngược lại
+      } else {
+        checkbox.checked = !checkbox.checked;
+      }
       if (checkbox.checked) {
         element.classList.add('checked');
       } else {
@@ -761,6 +961,142 @@ $youtubeEmbed = getYouTubeEmbedUrl($recipe['video_link'] ?? '');
       }
     }
 
+    // =========================================================================
+    // LOGIC TỰ ĐỘNG QUY ĐỔI ĐỊNH LƯỢNG NGUYÊN LIỆU THEO TỶ LỆ (INGREDIENT SCALING)
+    // =========================================================================
+
+    // Hàm làm tròn số thông minh và định dạng đẹp
+    function formatScaledAmount(num) {
+      if (isNaN(num) || num <= 0) return 0;
+      
+      // Nếu là số lớn (>= 100): làm tròn đến 0 chữ số thập phân (số nguyên) hoặc 1 số thập phân nếu cần
+      if (num >= 100) {
+        let rounded = Math.round(num * 10) / 10;
+        return Number.isInteger(rounded) ? rounded : rounded.toFixed(1);
+      }
+      
+      // Nếu từ 10 đến 100: làm tròn tối đa 1 chữ số thập phân
+      if (num >= 10) {
+        let rounded = Math.round(num * 10) / 10;
+        return Number.isInteger(rounded) ? rounded : rounded.toFixed(1);
+      }
+      
+      // Nếu nhỏ hơn 10: làm tròn tối đa 2 chữ số thập phân
+      let rounded = Math.round(num * 100) / 100;
+      return Number.isInteger(rounded) ? rounded : parseFloat(rounded.toFixed(2));
+    }
+
+    // Xử lý khi người dùng nhập số mới ở bất kỳ nguyên liệu nào
+    function handleIngredientChange(changedInput) {
+      let rawVal = changedInput.value.trim();
+      let newAmount = parseFloat(rawVal);
+      let baseAmount = parseFloat(changedInput.dataset.baseAmount);
+
+      // Validate ngoại lệ: không hợp lệ hoặc <= 0
+      if (isNaN(newAmount) || newAmount <= 0) {
+        return; // Đang gõ dở hoặc không hợp lệ, tạm thời không scale các ô khác
+      }
+      if (isNaN(baseAmount) || baseAmount <= 0) {
+        baseAmount = 1;
+      }
+
+      // Tính hệ số thay đổi: scaleFactor = newAmount / baseAmount
+      let scaleFactor = newAmount / baseAmount;
+
+      // Cập nhật nhãn hệ số
+      updateScaleBadge(scaleFactor);
+
+      // Cập nhật lại số lượng của tất cả nguyên liệu còn lại
+      const allInputs = document.querySelectorAll('.qty-input');
+      allInputs.forEach(input => {
+        if (input !== changedInput) {
+          let otherBase = parseFloat(input.dataset.baseAmount) || 1;
+          let calculatedAmount = otherBase * scaleFactor;
+          input.value = formatScaledAmount(calculatedAmount);
+          
+          // Thêm hiệu ứng highlight nhẹ khi cập nhật
+          input.classList.remove('highlight-changed');
+          void input.offsetWidth; // Trigger reflow
+          input.classList.add('highlight-changed');
+        }
+      });
+
+      // Bỏ active của các nút preset nếu tỷ lệ không khớp
+      updatePresetButtonState(scaleFactor);
+    }
+
+    // Áp dụng tỷ lệ nhanh từ các nút preset (0.5x, 1x, 1.5x, 2x, 3x)
+    function applyPresetScale(multiplier, btnElement) {
+      const allInputs = document.querySelectorAll('.qty-input');
+      allInputs.forEach(input => {
+        let base = parseFloat(input.dataset.baseAmount) || 1;
+        input.value = formatScaledAmount(base * multiplier);
+        
+        input.classList.remove('highlight-changed');
+        void input.offsetWidth;
+        input.classList.add('highlight-changed');
+      });
+
+      updateScaleBadge(multiplier);
+
+      // Đánh dấu active cho nút được bấm
+      document.querySelectorAll('.btn-preset-scale').forEach(b => b.classList.remove('active'));
+      if (btnElement) {
+        btnElement.classList.add('active');
+      }
+    }
+
+    // Đặt lại định lượng gốc (Reset về 1.0x)
+    function resetIngredientScaling() {
+      const allInputs = document.querySelectorAll('.qty-input');
+      allInputs.forEach(input => {
+        let base = parseFloat(input.dataset.baseAmount) || 1;
+        input.value = formatScaledAmount(base);
+        
+        input.classList.remove('highlight-changed');
+        void input.offsetWidth;
+        input.classList.add('highlight-changed');
+      });
+
+      updateScaleBadge(1.0);
+
+      document.querySelectorAll('.btn-preset-scale').forEach(b => b.classList.remove('active'));
+      const btn1x = document.getElementById('btnScale1x');
+      if (btn1x) btn1x.classList.add('active');
+    }
+
+    // Cập nhật nội dung hiển thị của badge tỷ lệ
+    function updateScaleBadge(factor) {
+      const badge = document.getElementById('scaleFactorBadge');
+      if (badge) {
+        let formattedFactor = formatScaledAmount(factor);
+        if (Math.abs(factor - 1.0) < 0.01) {
+          badge.innerText = '1.0x (Gốc)';
+          badge.style.background = '#e27227';
+        } else {
+          badge.innerText = formattedFactor + 'x';
+          badge.style.background = '#ea580c';
+        }
+      }
+    }
+
+    // Kiểm tra và cập nhật trạng thái active của nút preset
+    function updatePresetButtonState(factor) {
+      const presetButtons = document.querySelectorAll('.btn-preset-scale');
+      presetButtons.forEach(btn => {
+        let text = btn.innerText.replace('x', '').trim();
+        let val = parseFloat(text);
+        if (!isNaN(val) && Math.abs(val - factor) < 0.02) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+    }
+
+    // =========================================================================
+    // CÁC HÀM XỬ LÝ KHÁC (XÓA, ĐÁNH GIÁ, BÌNH LUẬN)
+    // =========================================================================
     function confirmDelete(id, title) {
       if (confirm('Bạn có chắc chắn muốn xóa công thức "' + title + '" không?\nHành động này không thể khôi phục!')) {
         window.location.href = 'delete.php?recipe_id=' + id;
