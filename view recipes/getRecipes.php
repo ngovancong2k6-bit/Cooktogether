@@ -17,8 +17,13 @@ if ($conn->connect_error) {
 
 $category = isset($_GET['category']) ? trim($_GET['category']) : '';
 $query = isset($_GET['q']) ? trim($_GET['q']) : '';
+$recipeId = isset($_GET['recipe_id']) ? intval($_GET['recipe_id']) : (isset($_GET['id']) ? intval($_GET['id']) : 0);
 
 $whereClauses = [];
+
+if ($recipeId > 0) {
+    $whereClauses[] = "recipes.id = $recipeId";
+}
 
 if (!empty($category) && strtolower($category) !== 'all') {
     $safeCategory = $conn->real_escape_string($category);
