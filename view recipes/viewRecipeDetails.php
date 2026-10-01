@@ -720,13 +720,16 @@ $youtubeEmbed = getYouTubeEmbedUrl($recipe['video_link'] ?? '');
       <h1 class="recipe-main-title"><?php echo htmlspecialchars($recipe['title']); ?></h1>
 
       <div class="uploader-info-row">
-        <div class="uploader-left">
+        <div class="uploader-left" onclick="window.location.href='author.php?user_id=<?php echo $recipe['user_id']; ?>'" style="cursor: pointer;" title="Xem tất cả món của <?php echo htmlspecialchars($recipe['uploader_name']); ?>">
           <div class="uploader-avatar-large">
             <?php echo strtoupper(substr($recipe['uploader_name'], 0, 1)); ?>
           </div>
           <div class="uploader-details">
-            <div class="author-name"><?php echo htmlspecialchars($recipe['uploader_name']); ?></div>
-            <div class="upload-date">Đăng vào ngày <?php echo date("d/m/Y", strtotime($recipe['uploaded_at'])); ?></div>
+            <div class="author-name" style="display: flex; align-items: center; gap: 6px;">
+              <span><?php echo htmlspecialchars($recipe['uploader_name']); ?></span>
+              <i class="fa-solid fa-circle-check" style="color: #2563eb; font-size: 13px;" title="Đầu bếp đã xác minh"></i>
+            </div>
+            <div class="upload-date">Đăng vào ngày <?php echo date("d/m/Y", strtotime($recipe['uploaded_at'])); ?> • <span style="color: var(--primary); font-weight: 700;">Xem hồ sơ bếp <i class="fa-solid fa-arrow-right" style="font-size: 11px;"></i></span></div>
           </div>
         </div>
 

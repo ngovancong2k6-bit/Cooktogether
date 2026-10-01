@@ -258,9 +258,9 @@ session_start();
             <h3 class="recipe-title">${recipe.title}</h3>
             <p class="recipe-desc">${desc}</p>
             <div class="recipe-footer">
-              <div class="recipe-uploader">
+              <div class="recipe-uploader" onclick="event.stopPropagation(); window.location.href='author.php?user_id=' + (recipe.user_id || 1);" title="Xem tất cả món của ${uploader}" style="cursor: pointer;">
                 <div class="uploader-mini-avatar">${uploader.charAt(0).toUpperCase()}</div>
-                <span>${uploader}</span>
+                <span style="transition: color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='inherit'">${uploader}</span>
               </div>
               <div class="rating-badge">
                 <i class="fa-solid fa-star"></i>

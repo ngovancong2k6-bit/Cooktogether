@@ -101,7 +101,9 @@
                         </div>
                         <div class="recipe-body">
                             <h2 class="recipe-title">${recipe.title}</h2>
-                            <p style="font-size: 13px; color: #6b7280; margin-bottom: 12px;">Đăng bởi: <strong>${uploader}</strong></p>
+                            <p style="font-size: 13px; color: #6b7280; margin-bottom: 12px; cursor: pointer;" onclick="event.stopPropagation(); window.location.href='author.php?user_id=' + (recipe.user_id || 1);" title="Xem tất cả món của ${uploader}">
+                                Đăng bởi: <strong style="color: var(--primary);">${uploader}</strong>
+                            </p>
                             <div class="recipe-footer">
                                 <span style="color: #4b5563; font-weight: 600;"><i class="fa-regular fa-clock"></i> ${time}</span>
                                 <div class="rating-badge">

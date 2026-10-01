@@ -18,11 +18,16 @@ if ($conn->connect_error) {
 $category = isset($_GET['category']) ? trim($_GET['category']) : '';
 $query = isset($_GET['q']) ? trim($_GET['q']) : '';
 $recipeId = isset($_GET['recipe_id']) ? intval($_GET['recipe_id']) : (isset($_GET['id']) ? intval($_GET['id']) : 0);
+$userId = isset($_GET['user_id']) ? intval($_GET['user_id']) : (isset($_GET['author_id']) ? intval($_GET['author_id']) : 0);
 
 $whereClauses = [];
 
 if ($recipeId > 0) {
     $whereClauses[] = "recipes.id = $recipeId";
+}
+
+if ($userId > 0) {
+    $whereClauses[] = "recipes.user_id = $userId";
 }
 
 if (!empty($category) && strtolower($category) !== 'all') {
@@ -41,7 +46,7 @@ if (count($whereClauses) > 0) {
 }
 
 $sql = "SELECT recipes.id, recipes.title, recipes.cooking_time, recipes.photo, recipes.type, 
-               recipes.description, u.name AS uploader_name,
+               recipes.description, recipes.user_id, u.name AS uploader_name,
                AVG(ratings.rating) AS avg_rating,
                COUNT(DISTINCT comments.id) AS comment_count
         FROM recipes
