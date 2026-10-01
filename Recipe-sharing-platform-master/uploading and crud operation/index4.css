@@ -1,0 +1,71 @@
+body {
+  background-image: url('back1.jpeg'); /* Add your background image URL here */
+  background-size: cover;
+  background-position: center;
+  margin: 0;
+  font-family: Arial, sans-serif;
+}
+
+.box {
+  background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent white background for the content */
+  max-width: 600px;
+  margin: 50px auto;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+h1 {
+  text-align: center;
+  color: #333;
+}
+
+.container {
+  margin-top: 20px;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+input,
+textarea,
+select {
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0;
+  box-sizing: border-box;
+}
+
+button {
+  background-color: #555;
+  color: #fff;
+  padding: 10px;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+button:hover {
+  background-color: #333;
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+input[type="submit"] {
+  background-color: #4CAF50;
+  color: white;
+}
+
+hr {
+  border: 1px solid black;
+  margin: 10px 0;
+  font-weight: bold;
+}
+
+/* Additional Styles can be added based on your preferences */

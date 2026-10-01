@@ -1,0 +1,100 @@
+/* index3.css */
+
+/* Global styles */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-image: url("land.jpeg"); /* Replace with your background image path */
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: rgba(255, 255, 255, 0.687); /* Add a semi-transparent background color */
+  border-radius: 10px;
+}
+
+.header-container {
+  background-color: rgba(255, 255, 255, 0.687); /* Add a semi-transparent background color */
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 
+  20px;
+}
+
+.header {
+  text-align: center;
+  color: #333;
+}
+
+.log {
+  text-align: right;
+}
+
+.logout_button {
+  background-color: #f20505;
+  color: #fff;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+/* index3.css */
+
+/* Add this CSS code after your existing styles */
+
+.highlight {
+  background-color: rgba(255, 255, 0, 0);
+  font-weight: bold;
+}
+.user-section {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.view,
+.upload {
+  background-color: #333;
+  color: #fff;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-right: 10px;
+}
+
+.buttons {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+p {
+  color: #333;
+}
+
+label {
+  margin-right: 10px;
+  color: #333;
+}
+
+select {
+  padding: 5px 10px;
+  border-radius: 5px;
+}
+
+button {
+  background-color: #333;
+  color: #fff;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+/* Add any additional styles you need */
