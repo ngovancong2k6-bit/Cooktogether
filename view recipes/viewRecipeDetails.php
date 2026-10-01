@@ -917,9 +917,10 @@ $youtubeEmbed = getYouTubeEmbedUrl($recipe['video_link'] ?? '');
 
         if ($commentsResult && $commentsResult->num_rows > 0) {
             while ($comment = $commentsResult->fetch_assoc()) {
-                $author = htmlspecialchars($comment['commenter_name']);
-                $commentText = nl2br(htmlspecialchars($comment['comment']));
-                $time = date("d/m/Y H:i", strtotime($comment['created_at']));
+                $author = htmlspecialchars($comment['commenter_name'] ?? 'Ẩn danh');
+                $rawContent = $comment['content'] ?? $comment['comment'] ?? '';
+                $commentText = nl2br(htmlspecialchars($rawContent));
+                $time = !empty($comment['created_at']) ? date("d/m/Y H:i", strtotime($comment['created_at'])) : '';
                 $initial = strtoupper(substr($author, 0, 1));
                 echo "
                 <div class='comment-item'>
