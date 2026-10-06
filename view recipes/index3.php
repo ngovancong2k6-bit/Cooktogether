@@ -468,7 +468,7 @@ session_start();
             <i class="fa-solid fa-border-all"></i> Tất cả
           </button>
           <button class="category-pill" onclick="filterCategory('Vietnamese', this)">
-            🇻🇳 Món Việt
+            <i class="fa-solid fa-bowl-food" style="color: #e27227;"></i> Món Việt
           </button>
           <button class="category-pill" onclick="filterCategory('NorthIndian', this)">
             🥘 Món Bắc Ấn
@@ -803,7 +803,7 @@ session_start();
 
       var titleMap = {
         'all': 'Gợi ý món ngon hôm nay',
-        'Vietnamese': '🇻🇳 Món ngon thuần Việt',
+        'Vietnamese': '🍲 Món ngon thuần Việt',
         'NorthIndian': '🥘 Món ngon phong vị Bắc Ấn',
         'SouthIndian': '🍛 Món ngon phong vị Nam Ấn',
         'Chinese': '🥢 Món ngon phong vị Trung Hoa',

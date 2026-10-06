@@ -144,7 +144,7 @@ $userId = $_SESSION['user_id'];
             <label class="form-label">Danh mục món <span style="color: #ef4444;">*</span></label>
             <select name="type" class="form-control" required>
               <option value="" disabled selected>-- Chọn danh mục món --</option>
-              <option value="Vietnamese">🇻🇳 Món Việt (Vietnamese)</option>
+              <option value="Vietnamese">🍲 Món Việt (Vietnamese)</option>
               <option value="NorthIndian">🥘 Món Bắc Ấn (North Indian)</option>
               <option value="SouthIndian">🍛 Món Nam Ấn (South Indian)</option>
               <option value="Chinese">🥢 Món Hoa (Chinese)</option>

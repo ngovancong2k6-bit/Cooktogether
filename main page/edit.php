@@ -308,7 +308,7 @@ if (empty($existingSteps)) {
           <div class="form-group">
             <label class="form-label">Danh mục món <span style="color: #ef4444;">*</span></label>
             <select name="type" class="form-control" required>
-              <option value="Vietnamese" <?php if ($recipe['type'] === 'Vietnamese') echo 'selected'; ?>>🇻🇳 Món Việt (Vietnamese)</option>
+              <option value="Vietnamese" <?php if ($recipe['type'] === 'Vietnamese') echo 'selected'; ?>>🍲 Món Việt (Vietnamese)</option>
               <option value="NorthIndian" <?php if ($recipe['type'] === 'NorthIndian') echo 'selected'; ?>>🥘 Món Bắc Ấn (North Indian)</option>
               <option value="SouthIndian" <?php if ($recipe['type'] === 'SouthIndian') echo 'selected'; ?>>🍛 Món Nam Ấn (South Indian)</option>
               <option value="Chinese" <?php if ($recipe['type'] === 'Chinese') echo 'selected'; ?>>🥢 Món Hoa (Chinese)</option>

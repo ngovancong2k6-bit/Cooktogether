@@ -230,7 +230,7 @@
         window.onload = function () {
             var titleMap = {
                 'all': 'Tất cả món ngon',
-                'Vietnamese': '🇻🇳 Món ngon thuần Việt',
+                'Vietnamese': '🍲 Món ngon thuần Việt',
                 'NorthIndian': '🥘 Món ngon phong vị Bắc Ấn',
                 'SouthIndian': '🍛 Món ngon phong vị Nam Ấn',
                 'Chinese': '🥢 Món ngon phong vị Trung Hoa',
