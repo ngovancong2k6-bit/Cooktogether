@@ -9,6 +9,145 @@ session_start();
   <title>Cook Together - Khám phá món ngon mỗi ngày</title>
   <link rel="stylesheet" href="index3.css?v=<?php echo time(); ?>">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    /* FILTER & SORT CONTROLS STYLES */
+    .filter-sort-wrapper {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 16px 20px;
+      margin-bottom: 28px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .filter-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .filter-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: #6b7280;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-right: 4px;
+    }
+
+    .sort-pill, .rating-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border-radius: var(--radius-pill);
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      font-size: 13px;
+      font-weight: 600;
+      color: #4b5563;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      user-select: none;
+    }
+
+    .sort-pill:hover, .rating-pill:hover {
+      background: #fff7ed;
+      border-color: #fdba74;
+      color: var(--primary);
+    }
+
+    .sort-pill.active {
+      background: linear-gradient(135deg, #f97316, #e27227);
+      border-color: transparent;
+      color: #ffffff;
+      font-weight: 700;
+      box-shadow: 0 3px 10px rgba(226, 114, 39, 0.3);
+    }
+
+    .sort-pill.active i {
+      color: #ffffff;
+    }
+
+    .rating-pill.active {
+      background: #fff7ed;
+      border-color: #f97316;
+      color: #c2410c;
+      font-weight: 700;
+      box-shadow: 0 2px 8px rgba(249, 115, 22, 0.15);
+    }
+
+    .results-count-badge {
+      font-size: 13px;
+      color: #6b7280;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .results-count-badge b {
+      color: var(--primary);
+      font-weight: 800;
+    }
+
+    /* TOP RATED BADGE ON CARDS */
+    .top-rated-tag {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      box-shadow: 0 4px 10px rgba(217, 119, 6, 0.4);
+      z-index: 2;
+      letter-spacing: 0.3px;
+    }
+
+    .rating-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      color: #b45309;
+      font-weight: 700;
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: var(--radius-pill);
+    }
+
+    .rating-badge i {
+      color: #f59e0b;
+      font-size: 12px;
+    }
+
+    .rating-count-sub {
+      color: #9ca3af;
+      font-size: 11px;
+      font-weight: 500;
+      margin-left: 2px;
+    }
+  </style>
 </head>
 <body>
   <div class="app-container">
@@ -109,9 +248,9 @@ session_start();
           <div class="hero-text">
             <h2>Chưa biết hôm nay nấu gì?</h2>
             <p>Khám phá hàng ngàn công thức nấu ăn ngon, chuẩn vị và dễ làm từ cộng đồng yêu bếp Cook Together!</p>
-            <button class="hero-btn" onclick="document.getElementById('searchInput').focus()">
-              <i class="fa-solid fa-wand-magic-sparkles"></i>
-              <span>Khám phá ngay</span>
+            <button class="hero-btn" onclick="setSort('top_rated', document.querySelector('.sort-pill[data-sort=top_rated]'))">
+              <i class="fa-solid fa-star text-warning"></i>
+              <span>Xem món đánh giá cao nhất</span>
             </button>
           </div>
         </section>
@@ -122,8 +261,12 @@ session_start();
             <i class="fa-solid fa-fire text-primary"></i>
             <span>Gợi ý món ngon hôm nay</span>
           </h2>
+          <div class="results-count-badge" id="resultsCountBadge">
+            <i class="fa-solid fa-utensils"></i> Đang tải món...
+          </div>
         </section>
 
+        <!-- DANH MỤC MÓN ĂN -->
         <div class="category-bar">
           <button class="category-pill active" onclick="filterCategory('all', this)">
             <i class="fa-solid fa-border-all"></i> Tất cả
@@ -148,6 +291,47 @@ session_start();
           </button>
         </div>
 
+        <!-- BỘ LỌC ĐÁNH GIÁ & SẮP XẾP ƯU TIÊN MÓN ĐÁNH GIÁ CAO -->
+        <div class="filter-sort-wrapper">
+          <!-- DÒNG 1: SẮP XẾP ƯU TIÊN -->
+          <div class="filter-row">
+            <div class="filter-group">
+              <span class="filter-label"><i class="fa-solid fa-arrow-down-wide-short"></i> Sắp xếp:</span>
+              <button type="button" class="sort-pill active" data-sort="top_rated" onclick="setSort('top_rated', this)">
+                <i class="fa-solid fa-star"></i> ⭐ Đánh giá cao nhất
+              </button>
+              <button type="button" class="sort-pill" data-sort="newest" onclick="setSort('newest', this)">
+                <i class="fa-solid fa-clock-rotate-left"></i> Mới đăng
+              </button>
+              <button type="button" class="sort-pill" data-sort="popular" onclick="setSort('popular', this)">
+                <i class="fa-solid fa-heart"></i> Yêu thích & Bình luận
+              </button>
+              <button type="button" class="sort-pill" data-sort="time_asc" onclick="setSort('time_asc', this)">
+                <i class="fa-solid fa-bolt"></i> Nấu nhanh
+              </button>
+            </div>
+          </div>
+
+          <!-- DÒNG 2: BỘ LỌC SỐ SAO ĐÁNH GIÁ -->
+          <div class="filter-row" style="border-top: 1px dashed #f0ebe1; padding-top: 10px;">
+            <div class="filter-group">
+              <span class="filter-label"><i class="fa-solid fa-filter"></i> Lọc theo sao:</span>
+              <button type="button" class="rating-pill active" data-min-rating="0" onclick="setMinRating(0, this)">
+                Tất cả sao
+              </button>
+              <button type="button" class="rating-pill" data-min-rating="4.5" onclick="setMinRating(4.5, this)">
+                <i class="fa-solid fa-star" style="color: #f59e0b;"></i> 4.5 ★ trở lên
+              </button>
+              <button type="button" class="rating-pill" data-min-rating="4.0" onclick="setMinRating(4.0, this)">
+                <i class="fa-solid fa-star" style="color: #f59e0b;"></i> 4.0 ★ trở lên
+              </button>
+              <button type="button" class="rating-pill" data-min-rating="3.0" onclick="setMinRating(3.0, this)">
+                <i class="fa-solid fa-star" style="color: #f59e0b;"></i> 3.0 ★ trở lên
+              </button>
+            </div>
+          </div>
+        </div>
+
         <!-- RECIPES FEED GRID -->
         <div class="recipes-grid" id="recipesGrid">
           <!-- Loaded dynamically via JavaScript -->
@@ -159,6 +343,8 @@ session_start();
 
   <script>
     let currentCategory = 'all';
+    let currentSort = 'top_rated';
+    let currentMinRating = 0;
     let searchQuery = '';
     let searchDebounceTimer = null;
 
@@ -190,12 +376,38 @@ session_start();
       xhr.send();
     }
 
+    // Thiết lập sắp xếp
+    function setSort(sortType, element) {
+      currentSort = sortType;
+      document.querySelectorAll(".sort-pill").forEach(btn => btn.classList.remove("active"));
+      if (element) {
+        element.classList.add("active");
+      }
+      fetchRecipes();
+    }
+
+    // Thiết lập lọc số sao
+    function setMinRating(minRating, element) {
+      currentMinRating = minRating;
+      document.querySelectorAll(".rating-pill").forEach(btn => btn.classList.remove("active"));
+      if (element) {
+        element.classList.add("active");
+      }
+      fetchRecipes();
+    }
+
     // Fetch recipes from getRecipes.php
     function fetchRecipes() {
       var grid = document.getElementById("recipesGrid");
-      grid.innerHTML = '<div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Đang tải món ngon...</p></div>';
+      grid.innerHTML = '<div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Đang tải món ngon theo đánh giá...</p></div>';
 
-      var url = "getRecipes.php?category=" + encodeURIComponent(currentCategory);
+      var url = "getRecipes.php?category=" + encodeURIComponent(currentCategory) +
+                "&sort=" + encodeURIComponent(currentSort);
+
+      if (currentMinRating > 0) {
+        url += "&min_rating=" + encodeURIComponent(currentMinRating);
+      }
+
       if (searchQuery.trim() !== '') {
         url += "&q=" + encodeURIComponent(searchQuery.trim());
       }
@@ -218,23 +430,27 @@ session_start();
 
     function renderRecipes(recipes) {
       var grid = document.getElementById("recipesGrid");
+      var countBadge = document.getElementById("resultsCountBadge");
       grid.innerHTML = "";
 
       if (!recipes || recipes.length === 0) {
+        countBadge.innerHTML = `Tìm thấy <b>0</b> món`;
         grid.innerHTML = `
           <div class="empty-state">
             <i class="fa-solid fa-utensils"></i>
-            <h3>Chưa tìm thấy công thức nào!</h3>
-            <p>Hãy thử tìm kiếm với từ khóa khác hoặc là người đầu tiên chia sẻ món này nhé.</p>
-            <a href="index4.php" class="btn-create-recipe" style="margin-top: 16px; display: inline-flex;">
-              <i class="fa-solid fa-plus"></i> Đăng công thức ngay
-            </a>
+            <h3>Chưa tìm thấy công thức nào phù hợp!</h3>
+            <p>Hãy thử thay đổi mức lọc đánh giá hoặc từ khóa tìm kiếm nhé.</p>
+            <button class="hero-btn" onclick="setMinRating(0, document.querySelector('.rating-pill[data-min-rating=\\'0\\']'))" style="margin-top: 16px;">
+              <i class="fa-solid fa-rotate-left"></i> Đặt lại bộ lọc
+            </button>
           </div>
         `;
         return;
       }
 
-      recipes.forEach(function (recipe) {
+      countBadge.innerHTML = `Hiển thị <b>${recipes.length}</b> món ngon`;
+
+      recipes.forEach(function (recipe, index) {
         var card = document.createElement("div");
         card.className = "recipe-card";
         card.onclick = function () {
@@ -243,13 +459,25 @@ session_start();
 
         var photoUrl = recipe.photo ? recipe.photo : 'upload.jpeg';
         var ratingNum = parseFloat(recipe.avg_rating);
-        var ratingDisplay = !isNaN(ratingNum) && ratingNum > 0 ? ratingNum.toFixed(1) : "5.0";
+        var ratingCount = parseInt(recipe.rating_count) || 0;
+        
+        var hasRating = !isNaN(ratingNum) && ratingNum > 0 && ratingCount > 0;
+        var ratingDisplay = hasRating ? ratingNum.toFixed(1) : "5.0";
+        var ratingSubText = hasRating ? `(${ratingCount})` : '(Mới)';
+
         var uploader = recipe.uploader_name || "Đầu bếp Cook Together";
         var cookingTime = recipe.cooking_time ? recipe.cooking_time + " phút" : "30 phút";
         var desc = recipe.description || "Công thức món ngon thơm lừng, dễ làm cho cả gia đình!";
 
+        // Tag Top Rated cho các món điểm cao nhất ở trang đầu khi sort top_rated
+        var topRatedHtml = '';
+        if (currentSort === 'top_rated' && hasRating && ratingNum >= 4.8 && index < 6) {
+          topRatedHtml = `<span class="top-rated-tag"><i class="fa-solid fa-crown"></i> Top Đánh Giá</span>`;
+        }
+
         card.innerHTML = `
           <div class="recipe-image-wrap">
+            ${topRatedHtml}
             <img src="${photoUrl}" alt="${recipe.title}" class="recipe-img" onerror="this.src='landing_page.jpg'">
             <span class="badge-time"><i class="fa-regular fa-clock"></i> ${cookingTime}</span>
             <span class="badge-category">${recipe.type || 'Món ngon'}</span>
@@ -262,9 +490,10 @@ session_start();
                 <div class="uploader-mini-avatar">${uploader.charAt(0).toUpperCase()}</div>
                 <span style="transition: color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='inherit'">${uploader}</span>
               </div>
-              <div class="rating-badge">
+              <div class="rating-badge" title="Đánh giá trung bình: ${ratingDisplay} / 5.0 (${ratingCount} lượt)">
                 <i class="fa-solid fa-star"></i>
                 <span>${ratingDisplay}</span>
+                <span class="rating-count-sub">${ratingSubText}</span>
               </div>
             </div>
           </div>

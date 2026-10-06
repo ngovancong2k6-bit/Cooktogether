@@ -6,6 +6,55 @@
     <title>Cook Together - Danh sách món ngon</title>
     <link rel="stylesheet" href="index51.css"> 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        .filter-sort-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            background: #ffffff;
+            padding: 14px 20px;
+            border-radius: 16px;
+            border: 1px solid #f0ebe1;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+        .filter-pills-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .f-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 9999px;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            font-size: 13px;
+            font-weight: 600;
+            color: #4b5563;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .f-pill:hover {
+            background: #fff7ed;
+            border-color: #fdba74;
+            color: #e27227;
+        }
+        .f-pill.active {
+            background: linear-gradient(135deg, #f97316, #e27227);
+            border-color: transparent;
+            color: #ffffff;
+            font-weight: 700;
+        }
+        .f-pill.active i {
+            color: #ffffff;
+        }
+    </style>
 </head>
 <body>
 
@@ -36,6 +85,28 @@
             </button>
         </div>
 
+        <!-- FILTER & SORT TOOLBAR -->
+        <div class="filter-sort-bar">
+            <div class="filter-pills-group">
+                <span style="font-size: 13px; font-weight: 700; color: #6b7280;"><i class="fa-solid fa-arrow-down-wide-short"></i> Sắp xếp:</span>
+                <button type="button" class="f-pill active" onclick="setSort('top_rated', this)">
+                    <i class="fa-solid fa-star"></i> ⭐ Đánh giá cao nhất
+                </button>
+                <button type="button" class="f-pill" onclick="setSort('newest', this)">
+                    <i class="fa-solid fa-clock"></i> Mới nhất
+                </button>
+                <button type="button" class="f-pill" onclick="setSort('popular', this)">
+                    <i class="fa-solid fa-heart"></i> Yêu thích nhất
+                </button>
+            </div>
+            <div class="filter-pills-group">
+                <span style="font-size: 13px; font-weight: 700; color: #6b7280;"><i class="fa-solid fa-filter"></i> Lọc sao:</span>
+                <button type="button" class="f-pill active" onclick="setMinRating(0, this)">Tất cả</button>
+                <button type="button" class="f-pill" onclick="setMinRating(4.5, this)">⭐ 4.5+</button>
+                <button type="button" class="f-pill" onclick="setMinRating(4.0, this)">⭐ 4.0+</button>
+            </div>
+        </div>
+
         <div id="recipe-list" class="recipes-grid">
             <div style="grid-column: 1/-1; text-align: center; padding: 40px;">
                 <i class="fa-solid fa-spinner fa-spin" style="font-size: 32px; color: var(--primary);"></i>
@@ -46,6 +117,8 @@
 
     <script>
         var categoryParam = new URLSearchParams(window.location.search).get('category') || 'all';
+        var currentSort = 'top_rated';
+        var currentMinRating = 0;
 
         window.onload = function () {
             var titleMap = {
@@ -61,6 +134,20 @@
             fetchRecipes();
         };
 
+        function setSort(sort, btn) {
+            currentSort = sort;
+            btn.parentElement.querySelectorAll(".f-pill").forEach(p => p.classList.remove("active"));
+            btn.classList.add("active");
+            fetchRecipes();
+        }
+
+        function setMinRating(rating, btn) {
+            currentMinRating = rating;
+            btn.parentElement.querySelectorAll(".f-pill").forEach(p => p.classList.remove("active"));
+            btn.classList.add("active");
+            fetchRecipes();
+        }
+
         function fetchRecipes() {
             var xhr = new XMLHttpRequest();
             xhr.onreadystatechange = function () {
@@ -73,7 +160,11 @@
                     }
                 }
             };
-            xhr.open("GET", "getRecipes.php?category=" + encodeURIComponent(categoryParam), true);
+            var url = "getRecipes.php?category=" + encodeURIComponent(categoryParam) + "&sort=" + encodeURIComponent(currentSort);
+            if (currentMinRating > 0) {
+                url += "&min_rating=" + encodeURIComponent(currentMinRating);
+            }
+            xhr.open("GET", url, true);
             xhr.send();
         }
 
@@ -91,7 +182,8 @@
 
                     var photo = recipe.photo ? recipe.photo : 'upload.jpeg';
                     var avg = parseFloat(recipe.avg_rating);
-                    var avgRatingText = !isNaN(avg) && avg > 0 ? avg.toFixed(1) : "5.0";
+                    var ratingCount = parseInt(recipe.rating_count) || 0;
+                    var avgRatingText = !isNaN(avg) && avg > 0 && ratingCount > 0 ? avg.toFixed(1) + ` (${ratingCount})` : "5.0 (Mới)";
                     var time = recipe.cooking_time ? recipe.cooking_time + " phút" : "30 phút";
                     var uploader = recipe.uploader_name || "Đầu bếp Cook Together";
 
@@ -107,7 +199,7 @@
                             <div class="recipe-footer">
                                 <span style="color: #4b5563; font-weight: 600;"><i class="fa-regular fa-clock"></i> ${time}</span>
                                 <div class="rating-badge">
-                                    <i class="fa-solid fa-star" style="color: var(--star-color);"></i>
+                                    <i class="fa-solid fa-star" style="color: var(--star-color, #f59e0b);"></i>
                                     <span>${avgRatingText}</span>
                                 </div>
                             </div>
@@ -120,8 +212,8 @@
                 recipeListDiv.innerHTML = `
                     <div style="grid-column: 1/-1; text-align: center; padding: 60px 20px; background: white; border-radius: 20px; border: 1px dashed #f0ebe1;">
                         <i class="fa-solid fa-utensils" style="font-size: 40px; color: #d1d5db; margin-bottom: 12px;"></i>
-                        <h3>Chưa có món nào trong danh mục này</h3>
-                        <p style="color: #6b7280; margin-top: 4px;">Hãy là người đầu tiên chia sẻ công thức nhé!</p>
+                        <h3>Chưa có món nào phù hợp</h3>
+                        <p style="color: #6b7280; margin-top: 4px;">Hãy thử điều chỉnh lại bộ lọc đánh giá nhé!</p>
                         <a href="index4.php" class="btn-pill" style="margin-top: 16px; background: var(--primary); color: white; border: none;">
                             <i class="fa-solid fa-plus"></i> Đăng món ngay
                         </a>
