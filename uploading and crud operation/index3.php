@@ -15,12 +15,12 @@ session_start();
       background: #ffffff;
       border: 1px solid var(--border-color);
       border-radius: var(--radius-lg);
-      padding: 16px 20px;
+      padding: 18px 22px;
       margin-bottom: 28px;
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 16px;
     }
 
     .filter-row {
@@ -48,7 +48,7 @@ session_start();
       margin-right: 4px;
     }
 
-    .sort-pill, .rating-pill {
+    .sort-pill {
       display: inline-flex;
       align-items: center;
       gap: 6px;
@@ -64,7 +64,7 @@ session_start();
       user-select: none;
     }
 
-    .sort-pill:hover, .rating-pill:hover {
+    .sort-pill:hover {
       background: #fff7ed;
       border-color: #fdba74;
       color: var(--primary);
@@ -82,12 +82,127 @@ session_start();
       color: #ffffff;
     }
 
-    .rating-pill.active {
-      background: #fff7ed;
-      border-color: #f97316;
-      color: #c2410c;
+    /* RATING SLIDER STYLES */
+    .slider-filter-box {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      width: 100%;
+      background: #fafaf9;
+      border: 1px solid #f0ebe1;
+      padding: 14px 18px;
+      border-radius: var(--radius-md);
+    }
+
+    .slider-track-container {
+      flex: 1;
+      min-width: 220px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .custom-range-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 8px;
+      border-radius: 9999px;
+      background: #e5e7eb;
+      outline: none;
+      transition: background 0.2s;
+      cursor: pointer;
+    }
+
+    .custom-range-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 3px solid #e27227;
+      box-shadow: 0 2px 8px rgba(226, 114, 39, 0.4);
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .custom-range-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.18);
+      box-shadow: 0 4px 12px rgba(226, 114, 39, 0.55);
+    }
+
+    .custom-range-slider::-moz-range-thumb {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 3px solid #e27227;
+      box-shadow: 0 2px 8px rgba(226, 114, 39, 0.4);
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+
+    .custom-range-slider::-moz-range-thumb:hover {
+      transform: scale(1.18);
+    }
+
+    .slider-ticks {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
       font-weight: 700;
-      box-shadow: 0 2px 8px rgba(249, 115, 22, 0.15);
+      color: #9ca3af;
+      padding: 0 4px;
+      user-select: none;
+    }
+
+    .slider-ticks span {
+      cursor: pointer;
+      transition: color 0.15s;
+    }
+
+    .slider-ticks span:hover {
+      color: var(--primary);
+    }
+
+    .slider-value-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #fff7ed;
+      border: 1.5px solid #fdba74;
+      color: #c2410c;
+      font-weight: 800;
+      font-size: 13px;
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      white-space: nowrap;
+      min-width: 170px;
+      justify-content: center;
+      box-shadow: 0 2px 6px rgba(249, 115, 22, 0.1);
+    }
+
+    .btn-reset-filter {
+      padding: 6px 12px;
+      border-radius: var(--radius-pill);
+      background: #ffffff;
+      border: 1px solid #d1d5db;
+      color: #4b5563;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s;
+    }
+
+    .btn-reset-filter:hover {
+      background: #fee2e2;
+      border-color: #fca5a5;
+      color: #dc2626;
     }
 
     .results-count-badge {
@@ -291,7 +406,7 @@ session_start();
           </button>
         </div>
 
-        <!-- BỘ LỌC ĐÁNH GIÁ & SẮP XẾP ƯU TIÊN MÓN ĐÁNH GIÁ CAO -->
+        <!-- BỘ LỌC ĐÁNH GIÁ DẠNG THANH TRƯỢT (RANGE SLIDER) & SẮP XẾP -->
         <div class="filter-sort-wrapper">
           <!-- DÒNG 1: SẮP XẾP ƯU TIÊN -->
           <div class="filter-row">
@@ -312,23 +427,43 @@ session_start();
             </div>
           </div>
 
-          <!-- DÒNG 2: BỘ LỌC SỐ SAO ĐÁNH GIÁ -->
-          <div class="filter-row" style="border-top: 1px dashed #f0ebe1; padding-top: 10px;">
-            <div class="filter-group">
-              <span class="filter-label"><i class="fa-solid fa-filter"></i> Lọc theo sao:</span>
-              <button type="button" class="rating-pill active" data-min-rating="0" onclick="setMinRating(0, this)">
-                Tất cả sao
-              </button>
-              <button type="button" class="rating-pill" data-min-rating="4.5" onclick="setMinRating(4.5, this)">
-                <i class="fa-solid fa-star" style="color: #f59e0b;"></i> 4.5 ★ trở lên
-              </button>
-              <button type="button" class="rating-pill" data-min-rating="4.0" onclick="setMinRating(4.0, this)">
-                <i class="fa-solid fa-star" style="color: #f59e0b;"></i> 4.0 ★ trở lên
-              </button>
-              <button type="button" class="rating-pill" data-min-rating="3.0" onclick="setMinRating(3.0, this)">
-                <i class="fa-solid fa-star" style="color: #f59e0b;"></i> 3.0 ★ trở lên
-              </button>
+          <!-- DÒNG 2: BỘ LỌC ĐÁNH GIÁ DẠNG THANH TRƯỢT (RANGE SLIDER) -->
+          <div class="slider-filter-box">
+            <span class="filter-label">
+              <i class="fa-solid fa-sliders text-primary"></i> Lọc điểm đánh giá:
+            </span>
+
+            <div class="slider-track-container">
+              <input 
+                type="range" 
+                id="ratingSlider" 
+                class="custom-range-slider" 
+                min="0" 
+                max="5" 
+                step="0.5" 
+                value="0" 
+                oninput="onSliderInput(this.value)"
+                onchange="onSliderChange(this.value)"
+              >
+              <div class="slider-ticks">
+                <span onclick="setSliderValue(0)">0★ (Tất cả)</span>
+                <span onclick="setSliderValue(1)">1★</span>
+                <span onclick="setSliderValue(2)">2★</span>
+                <span onclick="setSliderValue(3)">3★</span>
+                <span onclick="setSliderValue(4)">4★</span>
+                <span onclick="setSliderValue(4.5)">4.5★</span>
+                <span onclick="setSliderValue(5)">5★</span>
+              </div>
             </div>
+
+            <div class="slider-value-badge" id="sliderValueBadge">
+              <i class="fa-solid fa-star" style="color: #f59e0b;"></i>
+              <span id="sliderValueText">Tất cả sao (0★ - 5★)</span>
+            </div>
+
+            <button type="button" class="btn-reset-filter" id="btnResetRating" onclick="setSliderValue(0)" title="Xem lại tất cả sao">
+              <i class="fa-solid fa-rotate-left"></i> Đặt lại
+            </button>
           </div>
         </div>
 
@@ -349,6 +484,7 @@ session_start();
     let searchDebounceTimer = null;
 
     window.onload = function () {
+      updateSliderTrack(0);
       fetchUserInfo();
       fetchRecipes();
     };
@@ -376,7 +512,7 @@ session_start();
       xhr.send();
     }
 
-    // Thiết lập sắp xếp
+    // Sắp xếp
     function setSort(sortType, element) {
       currentSort = sortType;
       document.querySelectorAll(".sort-pill").forEach(btn => btn.classList.remove("active"));
@@ -386,14 +522,42 @@ session_start();
       fetchRecipes();
     }
 
-    // Thiết lập lọc số sao
-    function setMinRating(minRating, element) {
-      currentMinRating = minRating;
-      document.querySelectorAll(".rating-pill").forEach(btn => btn.classList.remove("active"));
-      if (element) {
-        element.classList.add("active");
-      }
+    // Xử lý khi đang kéo thanh trượt (Live preview text & track color)
+    function onSliderInput(val) {
+      var rating = parseFloat(val);
+      updateSliderTrack(rating);
+      updateSliderBadge(rating);
+    }
+
+    // Xử lý khi nhả thanh trượt -> gọi API lọc
+    function onSliderChange(val) {
+      currentMinRating = parseFloat(val);
       fetchRecipes();
+    }
+
+    // Gán giá trị trực tiếp cho thanh trượt (khi click vào các mốc hoặc nút Đặt lại)
+    function setSliderValue(val) {
+      var slider = document.getElementById("ratingSlider");
+      slider.value = val;
+      currentMinRating = parseFloat(val);
+      updateSliderTrack(currentMinRating);
+      updateSliderBadge(currentMinRating);
+      fetchRecipes();
+    }
+
+    function updateSliderTrack(rating) {
+      var slider = document.getElementById("ratingSlider");
+      var percentage = (rating / 5) * 100;
+      slider.style.background = `linear-gradient(to right, #e27227 0%, #f97316 ${percentage}%, #e5e7eb ${percentage}%, #e5e7eb 100%)`;
+    }
+
+    function updateSliderBadge(rating) {
+      var textEl = document.getElementById("sliderValueText");
+      if (rating === 0) {
+        textEl.innerText = "Tất cả sao (0★ - 5★)";
+      } else {
+        textEl.innerHTML = `Từ <b>${rating.toFixed(1)}★</b> trở lên`;
+      }
     }
 
     // Fetch recipes from getRecipes.php
@@ -438,17 +602,18 @@ session_start();
         grid.innerHTML = `
           <div class="empty-state">
             <i class="fa-solid fa-utensils"></i>
-            <h3>Chưa tìm thấy công thức nào phù hợp!</h3>
-            <p>Hãy thử thay đổi mức lọc đánh giá hoặc từ khóa tìm kiếm nhé.</p>
-            <button class="hero-btn" onclick="setMinRating(0, document.querySelector('.rating-pill[data-min-rating=\\'0\\']'))" style="margin-top: 16px;">
-              <i class="fa-solid fa-rotate-left"></i> Đặt lại bộ lọc
+            <h3>Chưa tìm thấy công thức nào từ ${currentMinRating}★ trở lên!</h3>
+            <p>Hãy kéo thanh trượt về mức sao thấp hơn hoặc chọn từ khóa khác nhé.</p>
+            <button class="hero-btn" onclick="setSliderValue(0)" style="margin-top: 16px;">
+              <i class="fa-solid fa-rotate-left"></i> Kéo về xem tất cả sao
             </button>
           </div>
         `;
         return;
       }
 
-      countBadge.innerHTML = `Hiển thị <b>${recipes.length}</b> món ngon`;
+      var filterText = currentMinRating > 0 ? ` (từ ${currentMinRating}★ trở lên)` : '';
+      countBadge.innerHTML = `Hiển thị <b>${recipes.length}</b> món ngon${filterText}`;
 
       recipes.forEach(function (recipe, index) {
         var card = document.createElement("div");

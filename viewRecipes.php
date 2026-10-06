@@ -9,16 +9,21 @@
     <style>
         .filter-sort-bar {
             display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 12px;
+            flex-direction: column;
+            gap: 14px;
             background: #ffffff;
-            padding: 14px 20px;
+            padding: 16px 20px;
             border-radius: 16px;
             border: 1px solid #f0ebe1;
             margin-bottom: 24px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+        .filter-row-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
         }
         .filter-pills-group {
             display: flex;
@@ -54,6 +59,78 @@
         .f-pill.active i {
             color: #ffffff;
         }
+
+        /* SLIDER STYLES */
+        .slider-box-compact {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            background: #fafaf9;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid #f0ebe1;
+        }
+        .slider-container-c {
+            flex: 1;
+            min-width: 200px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .c-range-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 7px;
+            border-radius: 9999px;
+            background: #e5e7eb;
+            outline: none;
+            cursor: pointer;
+        }
+        .c-range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 3px solid #e27227;
+            box-shadow: 0 2px 6px rgba(226, 114, 39, 0.4);
+            cursor: pointer;
+            transition: transform 0.15s;
+        }
+        .c-range-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+        }
+        .c-ticks {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            font-weight: 700;
+            color: #9ca3af;
+            padding: 0 2px;
+        }
+        .c-ticks span {
+            cursor: pointer;
+        }
+        .c-ticks span:hover {
+            color: #e27227;
+        }
+        .badge-slider-val {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: #fff7ed;
+            border: 1px solid #fdba74;
+            color: #c2410c;
+            font-weight: 800;
+            font-size: 12px;
+            padding: 5px 12px;
+            border-radius: 9999px;
+            min-width: 150px;
+            justify-content: center;
+        }
     </style>
 </head>
 <body>
@@ -87,23 +164,53 @@
 
         <!-- FILTER & SORT TOOLBAR -->
         <div class="filter-sort-bar">
-            <div class="filter-pills-group">
-                <span style="font-size: 13px; font-weight: 700; color: #6b7280;"><i class="fa-solid fa-arrow-down-wide-short"></i> Sắp xếp:</span>
-                <button type="button" class="f-pill active" onclick="setSort('top_rated', this)">
-                    <i class="fa-solid fa-star"></i> ⭐ Đánh giá cao nhất
-                </button>
-                <button type="button" class="f-pill" onclick="setSort('newest', this)">
-                    <i class="fa-solid fa-clock"></i> Mới nhất
-                </button>
-                <button type="button" class="f-pill" onclick="setSort('popular', this)">
-                    <i class="fa-solid fa-heart"></i> Yêu thích nhất
-                </button>
+            <div class="filter-row-top">
+                <div class="filter-pills-group">
+                    <span style="font-size: 13px; font-weight: 700; color: #6b7280;"><i class="fa-solid fa-arrow-down-wide-short"></i> Sắp xếp:</span>
+                    <button type="button" class="f-pill active" onclick="setSort('top_rated', this)">
+                        <i class="fa-solid fa-star"></i> ⭐ Đánh giá cao nhất
+                    </button>
+                    <button type="button" class="f-pill" onclick="setSort('newest', this)">
+                        <i class="fa-solid fa-clock"></i> Mới nhất
+                    </button>
+                    <button type="button" class="f-pill" onclick="setSort('popular', this)">
+                        <i class="fa-solid fa-heart"></i> Yêu thích nhất
+                    </button>
+                </div>
             </div>
-            <div class="filter-pills-group">
-                <span style="font-size: 13px; font-weight: 700; color: #6b7280;"><i class="fa-solid fa-filter"></i> Lọc sao:</span>
-                <button type="button" class="f-pill active" onclick="setMinRating(0, this)">Tất cả</button>
-                <button type="button" class="f-pill" onclick="setMinRating(4.5, this)">⭐ 4.5+</button>
-                <button type="button" class="f-pill" onclick="setMinRating(4.0, this)">⭐ 4.0+</button>
+
+            <!-- RATING RANGE SLIDER -->
+            <div class="slider-box-compact">
+                <span style="font-size: 13px; font-weight: 700; color: #6b7280;"><i class="fa-solid fa-sliders text-primary"></i> Lọc sao:</span>
+                <div class="slider-container-c">
+                    <input 
+                        type="range" 
+                        id="cRatingSlider" 
+                        class="c-range-slider" 
+                        min="0" 
+                        max="5" 
+                        step="0.5" 
+                        value="0"
+                        oninput="onCSliderInput(this.value)"
+                        onchange="onCSliderChange(this.value)"
+                    >
+                    <div class="c-ticks">
+                        <span onclick="setCSliderVal(0)">0★ (Tất cả)</span>
+                        <span onclick="setCSliderVal(1)">1★</span>
+                        <span onclick="setCSliderVal(2)">2★</span>
+                        <span onclick="setCSliderVal(3)">3★</span>
+                        <span onclick="setCSliderVal(4)">4★</span>
+                        <span onclick="setCSliderVal(4.5)">4.5★</span>
+                        <span onclick="setCSliderVal(5)">5★</span>
+                    </div>
+                </div>
+                <div class="badge-slider-val" id="cSliderBadge">
+                    <i class="fa-solid fa-star" style="color: #f59e0b;"></i>
+                    <span id="cSliderBadgeText">Tất cả sao (0★ - 5★)</span>
+                </div>
+                <button type="button" onclick="setCSliderVal(0)" style="padding: 4px 10px; border-radius: 9999px; border: 1px solid #d1d5db; background: #fff; font-size: 11px; cursor: pointer;">
+                    <i class="fa-solid fa-rotate-left"></i> Đặt lại
+                </button>
             </div>
         </div>
 
@@ -131,6 +238,7 @@
                 'Drinks': '🍹 Thức uống tươi mát'
             };
             document.getElementById("pageTitle").innerHTML = '<i class="fa-solid fa-utensils" style="color: var(--primary); margin-right: 8px;"></i> ' + (titleMap[categoryParam] || ('Danh mục: ' + categoryParam));
+            updateCSliderTrack(0);
             fetchRecipes();
         };
 
@@ -141,11 +249,39 @@
             fetchRecipes();
         }
 
-        function setMinRating(rating, btn) {
-            currentMinRating = rating;
-            btn.parentElement.querySelectorAll(".f-pill").forEach(p => p.classList.remove("active"));
-            btn.classList.add("active");
+        function onCSliderInput(val) {
+            var r = parseFloat(val);
+            updateCSliderTrack(r);
+            updateCSliderBadge(r);
+        }
+
+        function onCSliderChange(val) {
+            currentMinRating = parseFloat(val);
             fetchRecipes();
+        }
+
+        function setCSliderVal(val) {
+            var slider = document.getElementById("cRatingSlider");
+            slider.value = val;
+            currentMinRating = parseFloat(val);
+            updateCSliderTrack(currentMinRating);
+            updateCSliderBadge(currentMinRating);
+            fetchRecipes();
+        }
+
+        function updateCSliderTrack(val) {
+            var slider = document.getElementById("cRatingSlider");
+            var pct = (val / 5) * 100;
+            slider.style.background = `linear-gradient(to right, #e27227 0%, #f97316 ${pct}%, #e5e7eb ${pct}%, #e5e7eb 100%)`;
+        }
+
+        function updateCSliderBadge(val) {
+            var txt = document.getElementById("cSliderBadgeText");
+            if (val === 0) {
+                txt.innerText = "Tất cả sao (0★ - 5★)";
+            } else {
+                txt.innerHTML = `Từ <b>${val.toFixed(1)}★</b> trở lên`;
+            }
         }
 
         function fetchRecipes() {
@@ -212,11 +348,11 @@
                 recipeListDiv.innerHTML = `
                     <div style="grid-column: 1/-1; text-align: center; padding: 60px 20px; background: white; border-radius: 20px; border: 1px dashed #f0ebe1;">
                         <i class="fa-solid fa-utensils" style="font-size: 40px; color: #d1d5db; margin-bottom: 12px;"></i>
-                        <h3>Chưa có món nào phù hợp</h3>
-                        <p style="color: #6b7280; margin-top: 4px;">Hãy thử điều chỉnh lại bộ lọc đánh giá nhé!</p>
-                        <a href="index4.php" class="btn-pill" style="margin-top: 16px; background: var(--primary); color: white; border: none;">
-                            <i class="fa-solid fa-plus"></i> Đăng món ngay
-                        </a>
+                        <h3>Chưa có món nào từ ${currentMinRating}★ trở lên</h3>
+                        <p style="color: #6b7280; margin-top: 4px;">Hãy kéo thanh trượt về mức sao thấp hơn nhé!</p>
+                        <button onclick="setCSliderVal(0)" class="btn-pill" style="margin-top: 16px; background: var(--primary); color: white; border: none; cursor: pointer;">
+                            <i class="fa-solid fa-rotate-left"></i> Kéo về xem tất cả sao
+                        </button>
                     </div>
                 `;
             }
