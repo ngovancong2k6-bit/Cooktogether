@@ -313,10 +313,10 @@ $youtubeEmbed = getYouTubeEmbedUrl($recipe['video_link'] ?? '');
       gap: 10px;
     }
 
-    /* SCALING TOOLBAR STYLES */
+    /* SCALING TOOLBAR STYLES (KHẨU PHẦN ĂN TÙY CHỈNH) */
     .scaling-toolbar {
       background: #fffaf5;
-      border: 1px solid #fed7aa;
+      border: 1.5px solid #fed7aa;
       border-radius: var(--radius-md);
       padding: 14px 18px;
       margin-bottom: 20px;
@@ -324,28 +324,113 @@ $youtubeEmbed = getYouTubeEmbedUrl($recipe['video_link'] ?? '');
       align-items: center;
       justify-content: space-between;
       flex-wrap: wrap;
-      gap: 12px;
+      gap: 14px;
+      box-shadow: 0 2px 8px rgba(226, 114, 39, 0.05);
     }
 
-    .scaling-info {
+    .servings-control-group {
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 13.5px;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .servings-label {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 14px;
+      color: #7c2d12;
+      font-weight: 700;
+    }
+
+    .servings-stepper {
+      display: inline-flex;
+      align-items: center;
+      background: #ffffff;
+      border: 1.5px solid #fed7aa;
+      border-radius: var(--radius-pill);
+      padding: 3px 6px;
+      box-shadow: 0 1px 4px rgba(226, 114, 39, 0.08);
+      transition: all 0.2s ease;
+    }
+
+    .servings-stepper:focus-within {
+      border-color: #e27227;
+      box-shadow: 0 0 0 3px rgba(226, 114, 39, 0.15);
+    }
+
+    .btn-stepper {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #fff7ed;
+      border: 1px solid #fdba74;
+      color: #c2410c;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      outline: none;
+    }
+
+    .btn-stepper:hover {
+      background: #e27227;
+      color: #ffffff;
+      border-color: #e27227;
+      transform: scale(1.08);
+    }
+
+    .btn-stepper:active {
+      transform: scale(0.95);
+    }
+
+    .servings-input-wrap {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 0 6px;
+    }
+
+    .servings-input {
+      width: 44px;
+      border: none;
+      background: transparent;
+      font-size: 15px;
+      font-weight: 800;
       color: #9a3412;
-      font-weight: 600;
+      text-align: center;
+      outline: none;
+      padding: 2px 0;
+      -moz-appearance: textfield;
+    }
+
+    .servings-input::-webkit-outer-spin-button,
+    .servings-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .servings-unit {
+      font-size: 13px;
+      font-weight: 700;
+      color: #7c2d12;
+      user-select: none;
     }
 
     .scaling-factor-badge {
       display: inline-flex;
       align-items: center;
-      padding: 3px 10px;
+      padding: 4px 10px;
       background: #e27227;
       color: #ffffff;
       border-radius: var(--radius-pill);
       font-size: 12px;
       font-weight: 800;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.3px;
+      transition: all 0.2s ease;
     }
 
     .scaling-actions {
@@ -830,23 +915,49 @@ $youtubeEmbed = getYouTubeEmbedUrl($recipe['video_link'] ?? '');
         <i class="fa-solid fa-carrot" style="color: var(--primary);"></i> Nguyên liệu chuẩn bị
       </h2>
       
-      <!-- TOOLBAR QUY ĐỔI ĐỊNH LƯỢNG THÔNG MINH -->
+      <!-- TOOLBAR QUY ĐỔI KHẨU PHẦN ĂN THÔNG MINH -->
       <div class="scaling-toolbar">
-        <div class="scaling-info">
-          <i class="fa-solid fa-scale-balanced" style="color: var(--primary); font-size: 16px;"></i>
-          <span>Tự động quy đổi tỷ lệ:</span>
+        <div class="servings-control-group">
+          <div class="servings-label">
+            <i class="fa-solid fa-users" style="color: var(--primary);"></i>
+            <span>Khẩu phần:</span>
+          </div>
+
+          <!-- BỘ TĂNG GIẢM VÀ NHẬP KHẨU PHẦN TÙY Ý -->
+          <div class="servings-stepper">
+            <button type="button" class="btn-stepper" onclick="stepServing(-1)" title="Giảm 1 người">
+              <i class="fa-solid fa-minus"></i>
+            </button>
+            <div class="servings-input-wrap">
+              <input type="number" 
+                     id="servingsInput" 
+                     class="servings-input" 
+                     min="0.5" 
+                     max="100" 
+                     step="any" 
+                     value="2" 
+                     title="Nhập số người ăn bất kỳ"
+                     onfocus="this.select()" 
+                     oninput="handleCustomServingInput(this.value)">
+              <span class="servings-unit">người</span>
+            </div>
+            <button type="button" class="btn-stepper" onclick="stepServing(1)" title="Tăng 1 người">
+              <i class="fa-solid fa-plus"></i>
+            </button>
+          </div>
+
           <span class="scaling-factor-badge" id="scaleFactorBadge">1.0x (Gốc)</span>
         </div>
 
         <div class="scaling-actions">
           <span class="scaling-presets-label">Khẩu phần nhanh:</span>
-          <button type="button" class="btn-preset-scale" onclick="applyPresetScale(0.5, this)">0.5x</button>
-          <button type="button" class="btn-preset-scale active" id="btnScale1x" onclick="applyPresetScale(1.0, this)">1x</button>
-          <button type="button" class="btn-preset-scale" onclick="applyPresetScale(1.5, this)">1.5x</button>
-          <button type="button" class="btn-preset-scale" onclick="applyPresetScale(2.0, this)">2x</button>
-          <button type="button" class="btn-preset-scale" onclick="applyPresetScale(3.0, this)">3x</button>
+          <button type="button" class="btn-preset-scale" onclick="applyServingPreset(1, this)">1 người</button>
+          <button type="button" class="btn-preset-scale active" id="btnServing2" onclick="applyServingPreset(2, this)">2 người (Gốc)</button>
+          <button type="button" class="btn-preset-scale" onclick="applyServingPreset(4, this)">4 người</button>
+          <button type="button" class="btn-preset-scale" onclick="applyServingPreset(6, this)">6 người</button>
+          <button type="button" class="btn-preset-scale" onclick="applyServingPreset(8, this)">8 người</button>
           
-          <button type="button" class="btn-reset-scale" onclick="resetIngredientScaling()" title="Đặt lại định lượng ban đầu">
+          <button type="button" class="btn-reset-scale" onclick="resetIngredientScaling()" title="Đặt lại về khẩu phần gốc (2 người)">
             <i class="fa-solid fa-rotate-left"></i> Đặt lại gốc
           </button>
         </div>
@@ -891,7 +1002,7 @@ $youtubeEmbed = getYouTubeEmbedUrl($recipe['video_link'] ?? '');
       
       <p style="margin-top: 14px; font-size: 13px; color: #9ca3af; font-style: italic;">
         <i class="fa-solid fa-circle-info" style="color: var(--primary); margin-right: 4px;"></i> 
-        Mẹo: Bạn có thể chỉnh sửa số lượng của <strong>bất kỳ nguyên liệu nào</strong>, toàn bộ các nguyên liệu còn lại sẽ tự động quy đổi theo đúng tỷ lệ chuẩn vị!
+        Mẹo: Bạn có thể <strong>tùy ý tăng/giảm hoặc gõ số người ăn</strong> ở ô khẩu phần (hoặc chỉnh sửa số lượng của bất kỳ nguyên liệu nào) — toàn bộ công thức sẽ tự động quy đổi định lượng chuẩn xác!
       </p>
     </div>
 
@@ -1056,47 +1167,40 @@ $youtubeEmbed = getYouTubeEmbedUrl($recipe['video_link'] ?? '');
       return Number.isInteger(rounded) ? rounded : parseFloat(rounded.toFixed(2));
     }
 
-    // Xử lý khi người dùng nhập số mới ở bất kỳ nguyên liệu nào
-    function handleIngredientChange(changedInput) {
-      let rawVal = changedInput.value.trim();
-      let newAmount = parseFloat(rawVal);
-      let baseAmount = parseFloat(changedInput.dataset.baseAmount);
+    const BASE_SERVINGS = 2; // Khẩu phần ăn chuẩn gốc là 2 người
 
-      // Validate ngoại lệ: không hợp lệ hoặc <= 0
-      if (isNaN(newAmount) || newAmount <= 0) {
-        return; // Đang gõ dở hoặc không hợp lệ, tạm thời không scale các ô khác
-      }
-      if (isNaN(baseAmount) || baseAmount <= 0) {
-        baseAmount = 1;
-      }
-
-      // Tính hệ số thay đổi: scaleFactor = newAmount / baseAmount
-      let scaleFactor = newAmount / baseAmount;
-
-      // Cập nhật nhãn hệ số
-      updateScaleBadge(scaleFactor);
-
-      // Cập nhật lại số lượng của tất cả nguyên liệu còn lại
-      const allInputs = document.querySelectorAll('.qty-input');
-      allInputs.forEach(input => {
-        if (input !== changedInput) {
-          let otherBase = parseFloat(input.dataset.baseAmount) || 1;
-          let calculatedAmount = otherBase * scaleFactor;
-          input.value = formatScaledAmount(calculatedAmount);
-          
-          // Thêm hiệu ứng highlight nhẹ khi cập nhật
-          input.classList.remove('highlight-changed');
-          void input.offsetWidth; // Trigger reflow
-          input.classList.add('highlight-changed');
-        }
-      });
-
-      // Bỏ active của các nút preset nếu tỷ lệ không khớp
-      updatePresetButtonState(scaleFactor);
+    // Tăng / giảm số người ăn từng bước bằng nút +/-
+    function stepServing(delta) {
+      const input = document.getElementById('servingsInput');
+      let currentVal = parseFloat(input.value) || BASE_SERVINGS;
+      let newVal = Math.max(0.5, Math.round((currentVal + delta) * 10) / 10);
+      input.value = newVal;
+      applyServingScale(newVal);
     }
 
-    // Áp dụng tỷ lệ nhanh từ các nút preset (0.5x, 1x, 1.5x, 2x, 3x)
-    function applyPresetScale(multiplier, btnElement) {
+    // Nhập trực tiếp số người ăn tùy ý vào ô input
+    function handleCustomServingInput(val) {
+      let rawVal = (val + '').trim();
+      let servings = parseFloat(rawVal);
+      if (isNaN(servings) || servings <= 0) {
+        return; // Đang gõ dở hoặc xóa trống, chưa scale vội
+      }
+      applyServingScale(servings);
+    }
+
+    // Chọn nhanh các mốc khẩu phần (1, 2, 4, 6, 8 người)
+    function applyServingPreset(servings, btnElement) {
+      const input = document.getElementById('servingsInput');
+      if (input) {
+        input.value = servings;
+      }
+      applyServingScale(servings, btnElement);
+    }
+
+    // Áp dụng tính toán quy đổi theo số khẩu phần ăn
+    function applyServingScale(servings, btnElement) {
+      let multiplier = servings / BASE_SERVINGS;
+
       const allInputs = document.querySelectorAll('.qty-input');
       allInputs.forEach(input => {
         let base = parseFloat(input.dataset.baseAmount) || 1;
@@ -1108,16 +1212,58 @@ $youtubeEmbed = getYouTubeEmbedUrl($recipe['video_link'] ?? '');
       });
 
       updateScaleBadge(multiplier);
-
-      // Đánh dấu active cho nút được bấm
-      document.querySelectorAll('.btn-preset-scale').forEach(b => b.classList.remove('active'));
-      if (btnElement) {
-        btnElement.classList.add('active');
-      }
+      updateServingPresetButtonState(servings);
     }
 
-    // Đặt lại định lượng gốc (Reset về 1.0x)
+    // Xử lý khi người dùng nhập số lượng mới ở bất kỳ nguyên liệu nào bên dưới
+    function handleIngredientChange(changedInput) {
+      let rawVal = changedInput.value.trim();
+      let newAmount = parseFloat(rawVal);
+      let baseAmount = parseFloat(changedInput.dataset.baseAmount);
+
+      if (isNaN(newAmount) || newAmount <= 0) {
+        return;
+      }
+      if (isNaN(baseAmount) || baseAmount <= 0) {
+        baseAmount = 1;
+      }
+
+      // scaleFactor = newAmount / baseAmount
+      let scaleFactor = newAmount / baseAmount;
+      let calculatedServings = Math.round(BASE_SERVINGS * scaleFactor * 10) / 10;
+
+      // Tự động tính và cập nhật số người ăn tương ứng vào ô khẩu phần
+      const servingsInput = document.getElementById('servingsInput');
+      if (servingsInput) {
+        servingsInput.value = Number.isInteger(calculatedServings) ? calculatedServings : calculatedServings.toFixed(1);
+      }
+
+      updateScaleBadge(scaleFactor);
+
+      // Cập nhật lại số lượng của tất cả nguyên liệu còn lại
+      const allInputs = document.querySelectorAll('.qty-input');
+      allInputs.forEach(input => {
+        if (input !== changedInput) {
+          let otherBase = parseFloat(input.dataset.baseAmount) || 1;
+          let calculatedAmount = otherBase * scaleFactor;
+          input.value = formatScaledAmount(calculatedAmount);
+          
+          input.classList.remove('highlight-changed');
+          void input.offsetWidth;
+          input.classList.add('highlight-changed');
+        }
+      });
+
+      updateServingPresetButtonState(calculatedServings);
+    }
+
+    // Đặt lại định lượng gốc (2 người, 1.0x)
     function resetIngredientScaling() {
+      const servingsInput = document.getElementById('servingsInput');
+      if (servingsInput) {
+        servingsInput.value = BASE_SERVINGS;
+      }
+
       const allInputs = document.querySelectorAll('.qty-input');
       allInputs.forEach(input => {
         let base = parseFloat(input.dataset.baseAmount) || 1;
@@ -1131,8 +1277,8 @@ $youtubeEmbed = getYouTubeEmbedUrl($recipe['video_link'] ?? '');
       updateScaleBadge(1.0);
 
       document.querySelectorAll('.btn-preset-scale').forEach(b => b.classList.remove('active'));
-      const btn1x = document.getElementById('btnScale1x');
-      if (btn1x) btn1x.classList.add('active');
+      const btn2 = document.getElementById('btnServing2');
+      if (btn2) btn2.classList.add('active');
     }
 
     // Cập nhật nội dung hiển thị của badge tỷ lệ
@@ -1150,14 +1296,17 @@ $youtubeEmbed = getYouTubeEmbedUrl($recipe['video_link'] ?? '');
       }
     }
 
-    // Kiểm tra và cập nhật trạng thái active của nút preset
-    function updatePresetButtonState(factor) {
-      const presetButtons = document.querySelectorAll('.btn-preset-scale');
-      presetButtons.forEach(btn => {
-        let text = btn.innerText.replace('x', '').trim();
-        let val = parseFloat(text);
-        if (!isNaN(val) && Math.abs(val - factor) < 0.02) {
-          btn.classList.add('active');
+    // Cập nhật active cho các nút khẩu phần nhanh
+    function updateServingPresetButtonState(servings) {
+      document.querySelectorAll('.btn-preset-scale').forEach(btn => {
+        let match = btn.innerText.match(/^(\d+(\.\d+)?)/);
+        if (match) {
+          let val = parseFloat(match[1]);
+          if (Math.abs(val - servings) < 0.05) {
+            btn.classList.add('active');
+          } else {
+            btn.classList.remove('active');
+          }
         } else {
           btn.classList.remove('active');
         }
