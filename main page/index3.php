@@ -348,13 +348,19 @@ session_start();
 <body>
   <div class="app-container">
     
+    <!-- BACKDROP CHO SIDEBAR TRÊN DI ĐỘNG -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeSidebar()"></div>
+
     <!-- LEFT SIDEBAR (COOKPAD STYLE) -->
     <aside class="sidebar" id="appSidebar">
       <div class="sidebar-brand">
-        <a href="index3.php" class="brand-logo">
+        <a href="index3.php" class="brand-logo" onclick="closeSidebar()">
           <i class="fa-solid fa-utensils"></i>
           <span>Cook Together</span>
         </a>
+        <button type="button" class="btn-close-sidebar" onclick="closeSidebar()" title="Đóng menu">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
       </div>
 
       <div class="sidebar-nav">
@@ -390,11 +396,11 @@ session_start();
         </button>
 
         <div class="nav-section-title">Cá nhân</div>
-        <a href="viewUploadedRecipes.php" class="nav-item">
+        <a href="viewUploadedRecipes.php" class="nav-item" onclick="closeSidebar()">
           <i class="fa-solid fa-book-bookmark"></i>
           <span>Kho món ngon của bạn</span>
         </a>
-        <a href="index4.php" class="nav-item">
+        <a href="index4.php" class="nav-item" onclick="closeSidebar()">
           <i class="fa-solid fa-circle-plus"></i>
           <span>Đăng công thức mới</span>
         </a>
@@ -591,8 +597,34 @@ session_start();
     };
 
     function toggleSidebar() {
-      document.getElementById('appSidebar').classList.toggle('open');
+      var sidebar = document.getElementById('appSidebar');
+      var backdrop = document.getElementById('sidebarBackdrop');
+      if (!sidebar) return;
+      var isOpen = sidebar.classList.toggle('open');
+      if (backdrop) {
+        if (isOpen) {
+          backdrop.classList.add('show');
+          document.body.classList.add('sidebar-open');
+        } else {
+          backdrop.classList.remove('show');
+          document.body.classList.remove('sidebar-open');
+        }
+      }
     }
+
+    function closeSidebar() {
+      var sidebar = document.getElementById('appSidebar');
+      var backdrop = document.getElementById('sidebarBackdrop');
+      if (sidebar) sidebar.classList.remove('open');
+      if (backdrop) backdrop.classList.remove('show');
+      document.body.classList.remove('sidebar-open');
+    }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeSidebar();
+      }
+    });
 
     // Fetch user name from session API
     function fetchUserInfo() {
@@ -791,6 +823,15 @@ session_start();
 
     function filterCategory(category, element) {
       currentCategory = category;
+
+      // Tự động đóng menu trên màn hình di động khi bấm chọn mục
+      if (window.innerWidth <= 992) {
+        closeSidebar();
+      }
+
+      if (category === 'all') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
 
       // Update sidebar active item
       document.querySelectorAll(".sidebar-nav .nav-item").forEach(btn => btn.classList.remove("active"));

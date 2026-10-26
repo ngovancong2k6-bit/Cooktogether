@@ -131,6 +131,21 @@
             min-width: 150px;
             justify-content: center;
         }
+        @media (max-width: 640px) {
+            .recipes-navbar {
+                padding: 12px 16px;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            .brand-link {
+                font-size: 19px;
+            }
+            .category-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+        }
     </style>
 </head>
 <body>
