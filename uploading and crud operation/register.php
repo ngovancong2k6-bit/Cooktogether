@@ -12,11 +12,11 @@ $name = $_POST['name'];
 $email = $_POST['email'];
 $password = $_POST['password'];
 
-// Check password length client-side 
-if (strlen($password) < 4 || strlen($password) > 20) {
-    echo '<script>alert("Mật khẩu phải có độ dài từ 4 đến 20 ký tự."); window.history.back();</script>';
-}    else   
-    {
+// Check password length client-side / server-side
+if (strlen($password) < 4 || strlen($password) > 10) {
+    echo '<script>alert("Mật khẩu bị quá giới hạn ký tự (yêu cầu từ 4 đến 10 ký tự)!"); window.history.back();</script>';
+    exit();
+} else {
     // Continue with the registration process
     $checkUserQuery = "SELECT * FROM users WHERE email='$email'";
     $checkUserResult = $db->query($checkUserQuery);

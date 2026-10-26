@@ -210,6 +210,22 @@
             color: var(--text-main);
         }
 
+        .password-error-message {
+            margin-top: 7px;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: #ef4444;
+            display: none;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .input-field.input-error {
+            border-color: #ef4444 !important;
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15) !important;
+            background: #fffafa !important;
+        }
+
         .input-hint {
             display: block;
             font-size: 11px;
@@ -302,7 +318,7 @@
                 <p>Bắt đầu hành trình ẩm thực của bạn cùng Cook Together</p>
             </div>
 
-            <form action="register.php" method="post">
+            <form action="register.php" method="post" onsubmit="return validateRegisterForm()">
                 <div class="input-group">
                     <label for="nameInput">Họ và tên / Biệt danh</label>
                     <div class="input-wrapper">
@@ -323,12 +339,16 @@
                     <label for="passwordInput">Mật khẩu</label>
                     <div class="input-wrapper">
                         <i class="fa-solid fa-lock leading-icon"></i>
-                        <input id="passwordInput" class="input-field" type="password" name="password" placeholder="Nhập từ 4 đến 10 ký tự" minlength="4" maxlength="10" required autocomplete="new-password">
+                        <input id="passwordInput" class="input-field" type="password" name="password" placeholder="Nhập từ 4 đến 10 ký tự" minlength="4" required autocomplete="new-password" oninput="checkPasswordLimit(this)">
                         <button type="button" class="toggle-password-btn" onclick="togglePassword('passwordInput', this)" title="Ẩn/Hiện mật khẩu">
                             <i class="fa-solid fa-eye"></i>
                         </button>
                     </div>
-                    <span class="input-hint">Độ dài mật khẩu yêu cầu từ 4 đến 10 ký tự</span>
+                    <div id="passwordErrorMsg" class="password-error-message">
+                        <i class="fa-solid fa-circle-exclamation"></i>
+                        <span>Mật khẩu bị quá giới hạn ký tự (tối đa 10 ký tự)!</span>
+                    </div>
+                    <span class="input-hint" id="passwordHint">Độ dài mật khẩu yêu cầu từ 4 đến 10 ký tự</span>
                 </div>
 
                 <button type="submit" class="btn-submit">
@@ -345,6 +365,33 @@
     </div>
 
     <script>
+        function checkPasswordLimit(input) {
+            var val = input.value;
+            var errorMsg = document.getElementById("passwordErrorMsg");
+            var hint = document.getElementById("passwordHint");
+            if (val.length > 10) {
+                errorMsg.style.display = "flex";
+                input.classList.add("input-error");
+                if (hint) hint.style.display = "none";
+            } else {
+                errorMsg.style.display = "none";
+                input.classList.remove("input-error");
+                if (hint) hint.style.display = "block";
+            }
+        }
+
+        function validateRegisterForm() {
+            var pwd = document.getElementById("passwordInput");
+            if (pwd && pwd.value.length > 10) {
+                document.getElementById("passwordErrorMsg").style.display = "flex";
+                pwd.classList.add("input-error");
+                pwd.focus();
+                alert("Mật khẩu bị quá giới hạn ký tự (tối đa 10 ký tự). Vui lòng kiểm tra lại!");
+                return false;
+            }
+            return true;
+        }
+
         function togglePassword(inputId, btn) {
             var input = document.getElementById(inputId);
             var icon = btn.querySelector("i");
